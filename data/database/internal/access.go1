@@ -1,0 +1,18 @@
+package internal
+
+import (
+	"context"
+	"github.com/zzy-rabbit/ishare/model"
+	"github.com/zzy-rabbit/xtools/xerror"
+)
+
+func (s *session) AddAccess(ctx context.Context, access model.Access) (int, xerror.IError) {
+	var table Access
+	table.FromModel(access)
+	err := s.db.Create(&table).Error
+	if xerror.Error(err) {
+		s.logger.Error(ctx, "add access %+v fail %v", access, err)
+		return 0, transError(err)
+	}
+	return table.ID, nil
+}

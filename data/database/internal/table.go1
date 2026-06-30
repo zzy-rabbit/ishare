@@ -45,3 +45,18 @@ type Comment struct {
 func (*Comment) TableName() string {
 	return "table_comment"
 }
+
+type Access struct {
+	ID        int      `gorm:"column:id;primaryKey;autoIncrement"`
+	UserAgent string   `gorm:"column:user_agent"`
+	Locations []string `gorm:"column:locations;serializer:json"`
+	IP        string   `gorm:"column:ip"`
+	Time      int64    `gorm:"column:time"`
+	Trace     string   `gorm:"column:trace"`
+	Path      string   `gorm:"column:path"`
+	Method    string   `gorm:"column:method"`
+}
+
+func (*Access) TableName() string {
+	return "table_access"
+}

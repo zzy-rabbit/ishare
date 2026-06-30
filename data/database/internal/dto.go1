@@ -87,3 +87,28 @@ func (c *Comment) ToModel() model.Comment {
 		Time:      c.Time,
 	}
 }
+
+func (a *Access) FromModel(m model.Access) {
+	a.IP = m.IP
+	a.UserAgent = m.UserAgent
+	a.Time = m.Time
+	a.Trace = m.Trace
+	a.Path = m.Path
+	a.Method = m.Method
+	a.Locations = make([]string, len(m.Locations))
+	copy(a.Locations, m.Locations)
+}
+
+func (a *Access) ToModel() model.Access {
+	location := make([]string, len(a.Locations))
+	copy(location, a.Locations)
+	return model.Access{
+		IP:        a.IP,
+		UserAgent: a.UserAgent,
+		Locations: location,
+		Time:      a.Time,
+		Trace:     a.Trace,
+		Path:      a.Path,
+		Method:    a.Method,
+	}
+}

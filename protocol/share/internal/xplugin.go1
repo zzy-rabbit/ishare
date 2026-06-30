@@ -4,6 +4,7 @@ import (
 	"context"
 	httpApi "github.com/zzy-rabbit/bp/protocol/http/api"
 	logApi "github.com/zzy-rabbit/bp/tool/log/api"
+	databaseApi "github.com/zzy-rabbit/ishare/data/database/api"
 	regionApi "github.com/zzy-rabbit/ishare/data/ip2region/api"
 	shareApi "github.com/zzy-rabbit/ishare/logic/share/api"
 	"github.com/zzy-rabbit/ishare/protocol/share/api"
@@ -11,10 +12,11 @@ import (
 )
 
 type service struct {
-	IShare  shareApi.IPlugin  `xplugin:"ishare.logic.share"`
-	ILogger logApi.IPlugin    `xplugin:"bp.tool.log"`
-	IHttp   httpApi.IPlugin   `xplugin:"bp.protocol.http"`
-	IRegion regionApi.IPlugin `xplugin:"ishare.data.ip2region"`
+	IShare    shareApi.IPlugin    `xplugin:"ishare.logic.share"`
+	ILogger   logApi.IPlugin      `xplugin:"bp.tool.log"`
+	IHttp     httpApi.IPlugin     `xplugin:"bp.protocol.http"`
+	IRegion   regionApi.IPlugin   `xplugin:"ishare.data.ip2region"`
+	IDatabase databaseApi.IPlugin `xplugin:"ishare.data.database"`
 }
 
 func New(ctx context.Context) api.IPlugin {

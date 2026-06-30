@@ -3,7 +3,36 @@ package internal
 import (
 	"context"
 	"github.com/gofiber/fiber/v2"
+	"github.com/zzy-rabbit/ishare/model"
+	"github.com/zzy-rabbit/xtools/xcontext"
+	"github.com/zzy-rabbit/xtools/xerror"
+	"time"
 )
+
+func (s *service) AccessMiddleware() fiber.Handler {
+	return func(ctx *fiber.Ctx) error {
+		access := model.Access{}
+		access.IP = ctx.IP()
+		access.UserAgent = ctx.Get("User-Agent")
+		access.Time = time.Now().Unix()
+		locations, xerr := s.IRegion.Search(ctx.UserContext(), access.IP)
+		if xerror.Error(xerr) {
+			s.ILogger.Error(ctx.UserContext(), "search ip %+v fail %v", access.IP, xerr)
+		} else {
+			s.ILogger.Info(ctx.UserContext(), "search ip %s to %s", access.IP, locations)
+		}
+		access.Locations = locations
+		access.Trace = xcontext.GetTrace(ctx.UserContext())
+		access.Path = ctx.Path()
+		access.Method = ctx.Method()
+
+		_, xerr = s.IDatabase.GetDB(ctx.UserContext()).AddAccess(ctx.UserContext(), access)
+		if xerror.Error(xerr) {
+			s.ILogger.Error(ctx.UserContext(), "add access %+v fail %v", access, xerr)
+		}
+		return ctx.Next()
+	}
+}
 
 func (s *service) registerRouter(ctx context.Context, fiberApp *fiber.App) {
 	shareFileGroup := fiberApp.Group(
@@ -12,6 +41,7 @@ func (s *service) registerRouter(ctx context.Context, fiberApp *fiber.App) {
 		s.IHttp.TimingMiddleware(func(ctx *fiber.Ctx) bool {
 			return true
 		}),
+		s.AccessMiddleware(),
 	)
 	shareFileGroup.Post("", s.GetShareFiles)
 
@@ -19,6 +49,7 @@ func (s *service) registerRouter(ctx context.Context, fiberApp *fiber.App) {
 		"/system/api/v1/share",
 		s.IHttp.CORSMiddleware(),
 		s.IHttp.TimingMiddleware(),
+		s.AccessMiddleware(),
 	)
 
 	shareGroup.Post("add", s.AddShare)
@@ -27,13 +58,14 @@ func (s *service) registerRouter(ctx context.Context, fiberApp *fiber.App) {
 	shareGroup.Get("", s.GetShares)
 	shareGroup.Post("authentication", s.CheckSharePassword)
 
-	commentGroup := fiberApp.Group(
-		"/system/api/v1/comment",
-		s.IHttp.CORSMiddleware(),
-		s.IHttp.TimingMiddleware(),
-	)
-	commentGroup.Post("add", s.AddComment)
-	commentGroup.Post("update", s.UpdateComment)
-	commentGroup.Delete("", s.DeleteComments)
-	commentGroup.Get("", s.GetComments)
+	//commentGroup := fiberApp.Group(
+	//	"/system/api/v1/comment",
+	//	s.IHttp.CORSMiddleware(),
+	//	s.IHttp.TimingMiddleware(),
+	//	s.AccessMiddleware(),
+	//)
+	//commentGroup.Post("add", s.AddComment)
+	//commentGroup.Post("update", s.UpdateComment)
+	//commentGroup.Delete("", s.DeleteComments)
+	//commentGroup.Get("", s.GetComments)
 }

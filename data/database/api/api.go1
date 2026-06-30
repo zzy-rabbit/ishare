@@ -40,6 +40,8 @@ type ISession interface {
 	UpdateFile(ctx context.Context, file model.File) xerror.IError
 	DeleteFiles(ctx context.Context, identifies ...model.Identify) xerror.IError
 	GetFiles(ctx context.Context, condition model.FileCondition) ([]model.File, model.PageInfo, xerror.IError)
+
+	AddAccess(ctx context.Context, access model.Access) (int, xerror.IError)
 }
 
 type ITransaction interface {
