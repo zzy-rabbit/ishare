@@ -1,0 +1,47 @@
+package internal
+
+type File struct {
+	ID       int    `gorm:"column:id;primaryKey;autoIncrement"`
+	Identify string `gorm:"column:identify;unique"`
+	Name     string `gorm:"column:name"`
+	Type     int    `gorm:"column:type"`
+	Size     int64  `gorm:"column:size"`
+	Mime     string `gorm:"column:mime"`
+	Path     string `gorm:"column:path"`
+	URL      string `gorm:"column:url"`
+	Hash     string `gorm:"column:hash"`
+}
+
+func (*File) TableName() string {
+	return "table_file"
+}
+
+type Share struct {
+	ID       int      `gorm:"column:id;primaryKey;autoIncrement"`
+	Identify string   `gorm:"column:identify;unique"`
+	Files    []string `gorm:"column:files;serializer:json"`
+	Password string   `gorm:"column:password"`
+	Title    string   `gorm:"column:title"`
+	Text     string   `gorm:"column:text"`
+	CreateAt int64    `gorm:"column:create_at"`
+	Expire   int64    `gorm:"column:expire_at"`
+}
+
+func (*Share) TableName() string {
+	return "table_share"
+}
+
+type Comment struct {
+	ID        int      `gorm:"column:id;primaryKey;autoIncrement"`
+	Identify  string   `gorm:"column:identify;unique"`
+	Share     string   `gorm:"column:share"`
+	Content   string   `gorm:"column:content"`
+	UserAgent string   `gorm:"column:user_agent"`
+	Locations []string `gorm:"column:locations;serializer:json"`
+	IP        string   `gorm:"column:ip"`
+	Time      int64    `gorm:"column:time"`
+}
+
+func (*Comment) TableName() string {
+	return "table_comment"
+}

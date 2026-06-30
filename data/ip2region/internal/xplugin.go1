@@ -1,0 +1,51 @@
+package internal
+
+import (
+	"context"
+	"encoding/json"
+	"github.com/lionsoul2014/ip2region/binding/golang/xdb"
+	logApi "github.com/zzy-rabbit/bp/tool/log/api"
+	"github.com/zzy-rabbit/ishare/data/ip2region/api"
+	"github.com/zzy-rabbit/xtools/xerror"
+)
+
+type service struct {
+	ILogger  logApi.IPlugin `xplugin:"bp.tool.log"`
+	config   api.Config
+	searcher *xdb.Searcher
+}
+
+func New(ctx context.Context) api.IPlugin {
+	return &service{}
+}
+
+func (s *service) GetName(ctx context.Context) string {
+	return api.PluginName
+}
+
+func (s *service) Init(ctx context.Context, initParam string) xerror.IError {
+	err := json.Unmarshal([]byte(initParam), &s.config)
+	if xerror.Error(err) {
+		s.ILogger.Error(ctx, "plugin %s init error: %s", s.GetName(ctx), err.Error())
+		return xerror.Extend(xerror.ErrInvalidParam, "parse init param fail %v", err)
+	}
+	searcher, err := xdb.NewWithFileOnly(xdb.IPv4, s.config.Path)
+	if xerror.Error(err) {
+		s.ILogger.Error(ctx, "plugin %s init error: %s", s.GetName(ctx), err.Error())
+		return xerror.Extend(xerror.ErrInternalError, "new ip to region xdb fail %v", err)
+	}
+	s.searcher = searcher
+	s.ILogger.Info(ctx, "plugin %s init success", s.GetName(ctx))
+	return nil
+}
+
+func (s *service) Run(ctx context.Context, runParam string) xerror.IError {
+	s.ILogger.Info(ctx, "plugin %s run success", s.GetName(ctx))
+	return nil
+}
+
+func (s *service) Stop(ctx context.Context, stopParam string) xerror.IError {
+	s.searcher.Close()
+	s.ILogger.Info(ctx, "plugin %s stop success", s.GetName(ctx))
+	return nil
+}

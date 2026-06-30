@@ -1,0 +1,19 @@
+package api
+
+import (
+	"context"
+	"github.com/zzy-rabbit/ishare/model"
+	"github.com/zzy-rabbit/xtools/xerror"
+	"github.com/zzy-rabbit/xtools/xplugin"
+)
+
+const (
+	PluginName = "ishare.logic.file"
+)
+
+type IPlugin interface {
+	xplugin.IPlugin
+	CommitFile(ctx context.Context, identify model.Identify, basic model.FileBasic) (model.File, xerror.IError)
+	DeleteFiles(ctx context.Context, files ...model.Identify) xerror.IError
+	GetFiles(ctx context.Context, condition model.FileCondition) ([]model.File, model.PageInfo, xerror.IError)
+}

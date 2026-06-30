@@ -1,0 +1,76 @@
+{
+    "plugins": [
+        {
+            "plugin_name": "bp.tool.log",
+            "init_param": "{\"level\": 1,\"name\": \"ishare\",\"suffix\": \".log\",\"path\": \"\",\"max_size\": 10}",
+            "run_param": "",
+            "stop_param": ""
+        },
+        {
+            "plugin_name": "bp.tool.encrypt",
+            "init_param": "",
+            "run_param": "",
+            "stop_param": ""
+        },
+        {
+            "plugin_name": "bp.tool.timer",
+            "init_param": "",
+            "run_param": "",
+            "stop_param": ""
+        },
+        {
+            "plugin_name": "bp.tool.uniform",
+            "init_param": "",
+            "run_param": "",
+            "stop_param": ""
+        },
+        {
+            "plugin_name": "bp.protocol.http",
+            "init_param": "{\"host\": \"0.0.0.0\", \"port\": 9900}",
+            "run_param": "",
+            "stop_param": ""
+        },
+        {
+            "plugin_name": "bp.protocol.upload",
+            "init_param": "{\"base_url\": \"/system/api/v1/upload\",\"root_path\":\"./uploads\",\"expire\":604800,\"interval\":3600,\"max_size\":1048576}",
+            "run_param": "",
+            "stop_param": ""
+        },
+        {
+            "plugin_name": "ishare.data.database",
+            "init_param": "{\"driver\":\"sqlite\",\"sqlite\":{\"file\":\"ishare.db\",\"user\":\"\",\"password\":\"\"}}",
+            "run_param": "",
+            "stop_param": ""
+        },
+        {
+            "plugin_name": "ishare.data.ip2region",
+            "init_param": "{\"path\":\"thirdparty/ip2region_v4.xdb\"}",
+            "run_param": "",
+            "stop_param": ""
+        },
+        {
+            "plugin_name": "ishare.logic.file",
+            "init_param": "",
+            "run_param": "",
+            "stop_param": ""
+        },
+        {
+            "plugin_name": "ishare.logic.share",
+            "init_param": "{\"interval\":60}",
+            "run_param": "",
+            "stop_param": ""
+        },
+        {
+            "plugin_name": "ishare.protocol.file",
+            "init_param": "{\"path\":\"./resources\"}",
+            "run_param": "",
+            "stop_param": ""
+        },
+        {
+            "plugin_name": "ishare.protocol.share",
+            "init_param": "",
+            "run_param": "",
+            "stop_param": ""
+        }
+    ]
+}

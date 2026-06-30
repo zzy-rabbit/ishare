@@ -1,0 +1,120 @@
+package internal
+
+import (
+	"context"
+	"github.com/google/uuid"
+	"github.com/zzy-rabbit/ishare/model"
+	"github.com/zzy-rabbit/xtools/xerror"
+	"github.com/zzy-rabbit/xtools/xtrace"
+)
+
+func (s *service) AddShare(ctx context.Context, share model.Share) (model.Identify, xerror.IError) {
+	defer xtrace.Trace(ctx)(share)
+	if share.ID == "" {
+		share.ID = uuid.New().String()
+	}
+
+	files, _, xerr := s.IFile.GetFiles(ctx, model.FileCondition{IDs: share.Files})
+	if xerror.Error(xerr) {
+		s.ILogger.Error(ctx, "get file %s fail %v", share.Files, xerr)
+		return model.Identify{}, xerr
+	}
+	if len(files) == 0 {
+		s.ILogger.Error(ctx, "file %s not found", share.Files)
+		return model.Identify{}, xerror.Extend(xerror.ErrNotFound, "file %s not found", share.Files)
+	}
+
+	_, xerr = s.IDatabase.GetDB(ctx).AddShare(ctx, share)
+	if xerror.Error(xerr) {
+		s.ILogger.Error(ctx, "add share %+v fail %v", share, xerr)
+		return model.Identify{}, xerr
+	}
+	return share.Identify, nil
+}
+
+func (s *service) UpdateShare(ctx context.Context, share model.Share) xerror.IError {
+	defer xtrace.Trace(ctx)(share)
+	return s.IDatabase.GetDB(ctx).UpdateShare(ctx, share)
+}
+
+func (s *service) DeleteShares(ctx context.Context, identifies ...model.Identify) xerror.IError {
+	defer xtrace.Trace(ctx)(identifies)
+
+	// 删除share记录
+	ids := make([]string, 0, len(identifies))
+	for _, identify := range identifies {
+		ids = append(ids, identify.ID)
+	}
+	shares, _, xerr := s.IDatabase.GetDB(ctx).GetShares(ctx, model.ShareCondition{IDs: ids})
+	if xerror.Error(xerr) {
+		s.ILogger.Error(ctx, "get shares %+v fail %v", ids, xerr)
+		return xerr
+	}
+	xerr = s.IDatabase.GetDB(ctx).DeleteShares(ctx, identifies...)
+	if xerror.Error(xerr) {
+		s.ILogger.Error(ctx, "delete shares %+v fail %v", ids, xerr)
+		return xerr
+	}
+
+	// 删除文件
+	files := make([]model.Identify, 0, len(shares))
+	for _, share := range shares {
+		for _, file := range share.Files {
+			files = append(files, model.Identify{ID: file})
+		}
+	}
+	xerr = s.IFile.DeleteFiles(ctx, files...)
+	if xerror.Error(xerr) {
+		s.ILogger.Error(ctx, "delete files %+v fail %v", files, xerr)
+	}
+	return nil
+}
+
+func (s *service) GetShares(ctx context.Context, condition model.ShareCondition) ([]model.Share, model.PageInfo, xerror.IError) {
+	defer xtrace.Trace(ctx)(condition)
+	return s.IDatabase.GetDB(ctx).GetShares(ctx, condition)
+}
+
+func (s *service) CheckSharePassword(ctx context.Context, share model.Share) (bool, xerror.IError) {
+	defer xtrace.Trace(ctx)(share)
+	return s.IDatabase.GetDB(ctx).CheckSharePassword(ctx, share)
+}
+
+func (s *service) AddComment(ctx context.Context, comment model.Comment) (model.Identify, xerror.IError) {
+	defer xtrace.Trace(ctx)(comment)
+	if comment.ID == "" {
+		comment.ID = uuid.New().String()
+	}
+
+	shares, _, xerr := s.GetShares(ctx, model.ShareCondition{IDs: []string{comment.Share}})
+	if xerror.Error(xerr) {
+		s.ILogger.Error(ctx, "get share %s fail %v", comment.Share, xerr)
+		return model.Identify{}, xerr
+	}
+	if len(shares) == 0 {
+		s.ILogger.Error(ctx, "share %s not found", comment.Share)
+		return model.Identify{}, xerror.Extend(xerror.ErrNotFound, "share %s not found", comment.Share)
+	}
+
+	_, xerr = s.IDatabase.GetDB(ctx).AddComment(ctx, comment)
+	if xerror.Error(xerr) {
+		s.ILogger.Error(ctx, "add comment %+v fail %v", comment, xerr)
+		return model.Identify{}, xerr
+	}
+	return comment.Identify, nil
+}
+
+func (s *service) UpdateComment(ctx context.Context, comment model.Comment) xerror.IError {
+	defer xtrace.Trace(ctx)(comment)
+	return s.IDatabase.GetDB(ctx).UpdateComment(ctx, comment)
+}
+
+func (s *service) DeleteComments(ctx context.Context, comments ...model.Identify) xerror.IError {
+	defer xtrace.Trace(ctx)(comments)
+	return s.IDatabase.GetDB(ctx).DeleteComments(ctx, comments...)
+}
+
+func (s *service) GetComments(ctx context.Context, condition model.CommentCondition) ([]model.Comment, model.PageInfo, xerror.IError) {
+	defer xtrace.Trace(ctx)(condition)
+	return s.IDatabase.GetDB(ctx).GetComments(ctx, condition)
+}

@@ -1,0 +1,174 @@
+package internal
+
+import (
+	"context"
+	"github.com/zzy-rabbit/ishare/model"
+	"github.com/zzy-rabbit/xtools/xerror"
+)
+
+func (s *session) AddShare(ctx context.Context, share model.Share) (int, xerror.IError) {
+	var table Share
+	table.FromModel(share)
+	err := s.db.Create(&table).Error
+	if xerror.Error(err) {
+		s.logger.Error(ctx, "add share %+v fail %v", share, err)
+		return 0, transError(err)
+	}
+	return table.ID, nil
+}
+
+func (s *session) UpdateShare(ctx context.Context, share model.Share) xerror.IError {
+	var table Share
+	table.FromModel(share)
+	err := s.db.Where("identify = ?", table.ID).Updates(&table).Error
+	if xerror.Error(err) {
+		s.logger.Error(ctx, "update share %+v fail %v", share, err)
+		return transError(err)
+	}
+	return nil
+}
+
+func (s *session) DeleteShares(ctx context.Context, identifies ...model.Identify) xerror.IError {
+	ids := make([]string, 0, len(identifies))
+	for _, identify := range identifies {
+		ids = append(ids, identify.ID)
+	}
+
+	tx := s.getTransaction(ctx)
+
+	// 删除share
+	err := tx.db.Where("identify in ?", ids).Delete(&Share{}).Error
+	if xerror.Error(err) {
+		tx.Rollback(ctx)
+		s.logger.Error(ctx, "delete shares %+v fail %v", ids, err)
+		return transError(err)
+	}
+	// 删除comment
+	err = tx.db.Where("share in ?", ids).Delete(&Comment{}).Error
+	if xerror.Error(err) {
+		tx.Rollback(ctx)
+		s.logger.Error(ctx, "delete comments %+v fail %v", ids, err)
+		return transError(err)
+	}
+	tx.Commit(ctx)
+	return nil
+}
+
+func (s *session) GetShares(ctx context.Context, condition model.ShareCondition) ([]model.Share, model.PageInfo, xerror.IError) {
+	db := s.db
+	if len(condition.IDs) > 0 {
+		db = db.Where("identify in ?", condition.IDs)
+	}
+	if condition.ExpireAfter != 0 {
+		db = db.Where("expire_at >= ?", condition.ExpireAfter)
+	}
+	if condition.ExpireBefore != 0 {
+		db = db.Where("expire_at <= ?", condition.ExpireBefore)
+	}
+
+	total := int64(0)
+	if condition.PageQuery != nil && condition.PageQuery.Num > 0 && condition.PageQuery.Size > 0 {
+		err := db.Model(&Share{}).Count(&total).Error
+		if xerror.Error(err) {
+			s.logger.Error(ctx, "query shares count by condition %+v fail %v", condition, err)
+			return nil, model.PageInfo{}, transError(err)
+		}
+		offset := (condition.PageQuery.Num - 1) * condition.PageQuery.Size
+		db = db.Offset(offset).Limit(condition.PageQuery.Size)
+	}
+
+	var tables []Share
+	err := db.Find(&tables).Error
+	if xerror.Error(err) {
+		s.logger.Error(ctx, "query shares by condition %+v fail %v", condition, err)
+		return nil, model.PageInfo{}, transError(err)
+	}
+	shares := make([]model.Share, 0, len(tables))
+	for _, table := range tables {
+		table.Password = ""
+		shares = append(shares, table.ToModel())
+	}
+	return shares, model.PageInfo{
+		Count: len(tables),
+		Total: int(total),
+	}, nil
+}
+
+func (s *session) CheckSharePassword(ctx context.Context, share model.Share) (bool, xerror.IError) {
+	var count int64
+	err := s.db.Model(&Share{}).Where("identify = ? and password = ?", share.ID, share.Password).Count(&count).Error
+	if xerror.Error(err) {
+		s.logger.Error(ctx, "query share by condition %+v fail %v", share, err)
+		return false, transError(err)
+	}
+	return count > 0, nil
+}
+
+func (s *session) AddComment(ctx context.Context, comment model.Comment) (int, xerror.IError) {
+	var table Comment
+	table.FromModel(comment)
+	err := s.db.Create(&table).Error
+	if xerror.Error(err) {
+		s.logger.Error(ctx, "add comment %+v fail %v", comment, err)
+		return 0, transError(err)
+	}
+	return table.ID, nil
+}
+
+func (s *session) UpdateComment(ctx context.Context, comment model.Comment) xerror.IError {
+	var table Comment
+	table.FromModel(comment)
+	err := s.db.Where("identify = ?", table.ID).Updates(&table).Error
+	if xerror.Error(err) {
+		s.logger.Error(ctx, "update comment %+v fail %v", comment, err)
+		return transError(err)
+	}
+	return nil
+}
+
+func (s *session) DeleteComments(ctx context.Context, identifies ...model.Identify) xerror.IError {
+	ids := make([]string, 0, len(identifies))
+	for _, identify := range identifies {
+		ids = append(ids, identify.ID)
+	}
+
+	// 删除comment
+	err := s.db.Where("identify in ?", ids).Delete(&Comment{}).Error
+	if xerror.Error(err) {
+		s.logger.Error(ctx, "delete comments %+v fail %v", ids, err)
+		return transError(err)
+	}
+	return nil
+}
+
+func (s *session) GetComments(ctx context.Context, condition model.CommentCondition) ([]model.Comment, model.PageInfo, xerror.IError) {
+	db := s.db
+	if len(condition.IDs) > 0 {
+		db = db.Where("identify in ?", condition.IDs)
+	}
+	total := int64(0)
+	if condition.PageQuery != nil && condition.PageQuery.Num > 0 && condition.PageQuery.Size > 0 {
+		err := db.Model(&Comment{}).Count(&total).Error
+		if xerror.Error(err) {
+			s.logger.Error(ctx, "query comments count by condition %+v fail %v", condition, err)
+			return nil, model.PageInfo{}, transError(err)
+		}
+		offset := (condition.PageQuery.Num - 1) * condition.PageQuery.Size
+		db = db.Offset(offset).Limit(condition.PageQuery.Size)
+	}
+
+	var tables []Comment
+	err := db.Find(&tables).Error
+	if xerror.Error(err) {
+		s.logger.Error(ctx, "query comments by condition %+v fail %v", condition, err)
+		return nil, model.PageInfo{}, transError(err)
+	}
+	comments := make([]model.Comment, 0, len(tables))
+	for _, table := range tables {
+		comments = append(comments, table.ToModel())
+	}
+	return comments, model.PageInfo{
+		Count: len(tables),
+		Total: int(total),
+	}, nil
+}

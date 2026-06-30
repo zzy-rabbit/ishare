@@ -1,0 +1,30 @@
+package api
+
+import (
+	"context"
+	"github.com/zzy-rabbit/ishare/model"
+	"github.com/zzy-rabbit/xtools/xerror"
+	"github.com/zzy-rabbit/xtools/xplugin"
+)
+
+const (
+	PluginName = "ishare.logic.share"
+)
+
+type Config struct {
+	Interval int `json:"interval"`
+}
+
+type IPlugin interface {
+	xplugin.IPlugin
+	AddShare(ctx context.Context, share model.Share) (model.Identify, xerror.IError)
+	UpdateShare(ctx context.Context, share model.Share) xerror.IError
+	DeleteShares(ctx context.Context, shares ...model.Identify) xerror.IError
+	GetShares(ctx context.Context, condition model.ShareCondition) ([]model.Share, model.PageInfo, xerror.IError)
+	CheckSharePassword(ctx context.Context, share model.Share) (bool, xerror.IError)
+
+	AddComment(ctx context.Context, comment model.Comment) (model.Identify, xerror.IError)
+	UpdateComment(ctx context.Context, comment model.Comment) xerror.IError
+	DeleteComments(ctx context.Context, comments ...model.Identify) xerror.IError
+	GetComments(ctx context.Context, condition model.CommentCondition) ([]model.Comment, model.PageInfo, xerror.IError)
+}

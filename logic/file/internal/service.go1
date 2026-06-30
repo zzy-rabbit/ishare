@@ -1,0 +1,66 @@
+package internal
+
+import (
+	"context"
+	"github.com/google/uuid"
+	"github.com/zzy-rabbit/ishare/model"
+	"github.com/zzy-rabbit/xtools/xerror"
+	"github.com/zzy-rabbit/xtools/xtrace"
+	"os"
+)
+
+func (s *service) CommitFile(ctx context.Context, identify model.Identify, basic model.FileBasic) (model.File, xerror.IError) {
+	defer xtrace.Trace(ctx)(identify, basic)
+	if identify.ID == "" {
+		identify.ID = uuid.New().String()
+	}
+	file := model.File{
+		Identify:   identify,
+		FileBasic:  basic,
+		FileExtern: model.FileExtern{},
+	}
+	_, xerr := s.IDatabase.GetDB(ctx).AddFile(ctx, file)
+	if xerror.Error(xerr) {
+		s.ILogger.Error(ctx, "add file %+v fail %v", file, xerr)
+		return model.File{}, xerr
+	}
+	return file, nil
+}
+
+func (s *service) DeleteFiles(ctx context.Context, identifies ...model.Identify) xerror.IError {
+	defer xtrace.Trace(ctx)(identifies)
+
+	// 查询文件的详情，用于获取文件路径
+	ids := make([]string, len(identifies))
+	for i, identify := range identifies {
+		ids[i] = identify.ID
+	}
+	files, _, xerr := s.IDatabase.GetDB(ctx).GetFiles(ctx, model.FileCondition{
+		IDs: ids,
+	})
+	if xerror.Error(xerr) {
+		s.ILogger.Error(ctx, "get file %+v fail %v", files, xerr)
+		return xerr
+	}
+
+	// 从db删除记录
+	xerr = s.IDatabase.GetDB(ctx).DeleteFiles(ctx, identifies...)
+	if xerror.Error(xerr) {
+		s.ILogger.Error(ctx, "add file %+v fail %v", identifies, xerr)
+		return xerr
+	}
+
+	// 删除文件
+	for _, file := range files {
+		err := os.RemoveAll(file.Path)
+		if xerror.Error(err) {
+			s.ILogger.Error(ctx, "delete file %+v fail %v", file, err)
+		}
+	}
+	return nil
+}
+
+func (s *service) GetFiles(ctx context.Context, condition model.FileCondition) ([]model.File, model.PageInfo, xerror.IError) {
+	defer xtrace.Trace(ctx)(condition)
+	return s.IDatabase.GetDB(ctx).GetFiles(ctx, condition)
+}

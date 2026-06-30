@@ -1,0 +1,30 @@
+package internal
+
+import (
+	"context"
+	"github.com/gofiber/fiber/v2"
+)
+
+func (s *service) registerRouter(ctx context.Context, fiberApp *fiber.App) {
+	shareGroup := fiberApp.Group(
+		"/system/api/v1/share",
+		s.IHttp.CORSMiddleware(),
+		s.IHttp.TimingMiddleware(),
+	)
+
+	shareGroup.Post("add", s.AddShare)
+	shareGroup.Post("update", s.UpdateShare)
+	shareGroup.Delete("", s.DeleteShares)
+	shareGroup.Get("", s.GetShares)
+	shareGroup.Post("authentication", s.CheckSharePassword)
+
+	commentGroup := fiberApp.Group(
+		"/system/api/v1/comment",
+		s.IHttp.CORSMiddleware(),
+		s.IHttp.TimingMiddleware(),
+	)
+	commentGroup.Post("add", s.AddComment)
+	commentGroup.Post("update", s.UpdateComment)
+	commentGroup.Delete("", s.DeleteComments)
+	commentGroup.Get("", s.GetComments)
+}

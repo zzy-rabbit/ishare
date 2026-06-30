@@ -1,0 +1,52 @@
+package internal
+
+import (
+	"context"
+	logApi "github.com/zzy-rabbit/bp/tool/log/api"
+	"github.com/zzy-rabbit/ishare/data/database/api"
+	"gorm.io/gorm"
+)
+
+type session struct {
+	db     *gorm.DB
+	tx     bool
+	logger logApi.IPlugin
+}
+
+type transaction struct {
+	*session
+	commit bool
+}
+
+func (t *transaction) Commit(ctx context.Context) {
+	if t.commit {
+		t.db.Commit()
+	}
+}
+
+func (t *transaction) Rollback(ctx context.Context) {
+	if t.commit {
+		t.db.Rollback()
+	}
+}
+
+func (s *session) GetTransaction(ctx context.Context) api.ITransaction {
+	return s.getTransaction(ctx)
+}
+
+func (s *session) getTransaction(ctx context.Context) *transaction {
+	if s.tx {
+		return &transaction{
+			session: s,
+			commit:  false,
+		}
+	}
+	return &transaction{
+		session: &session{
+			db:     s.db.Begin(),
+			tx:     true,
+			logger: s.logger,
+		},
+		commit: true,
+	}
+}

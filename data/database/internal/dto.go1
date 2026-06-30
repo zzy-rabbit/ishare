@@ -1,0 +1,89 @@
+package internal
+
+import (
+	"github.com/zzy-rabbit/ishare/model"
+)
+
+func (f *File) FromModel(m model.File) {
+	f.Identify = m.Identify.ID
+	f.Name = m.Name
+	f.Type = int(m.Type)
+	f.Size = m.Size
+	f.Mime = m.Mime
+	f.Path = m.Path
+	f.URL = m.URL
+	f.Hash = m.Hash
+}
+
+func (f *File) ToModel() model.File {
+	return model.File{
+		Identify: model.Identify{
+			ID: f.Identify,
+		},
+		FileBasic: model.FileBasic{
+			Name: f.Name,
+			Type: model.FileType(f.Type),
+			Size: f.Size,
+			Mime: f.Mime,
+			Path: f.Path,
+		},
+		FileExtern: model.FileExtern{
+			URL:  f.URL,
+			Hash: f.Hash,
+		},
+	}
+}
+
+func (s *Share) FromModel(m model.Share) {
+	s.Identify = m.Identify.ID
+	s.Password = m.Password
+	s.Title = m.Title
+	s.Text = m.Text
+	s.CreateAt = m.CreateAt
+	s.Expire = m.ExpireAt
+	s.Files = make([]string, len(m.Files))
+	copy(s.Files, m.Files)
+}
+
+func (s *Share) ToModel() model.Share {
+	files := make([]string, len(s.Files))
+	copy(files, s.Files)
+	return model.Share{
+		Identify: model.Identify{
+			ID: s.Identify,
+		},
+		Files:    files,
+		Password: s.Password,
+		Title:    s.Title,
+		Text:     s.Text,
+		CreateAt: s.CreateAt,
+		ExpireAt: s.Expire,
+	}
+}
+
+func (c *Comment) FromModel(m model.Comment) {
+	c.Identify = m.Identify.ID
+	c.Share = m.Share
+	c.Content = m.Content
+	c.IP = m.IP
+	c.UserAgent = m.UserAgent
+	c.Time = m.Time
+	c.Locations = make([]string, len(m.Locations))
+	copy(c.Locations, m.Locations)
+}
+
+func (c *Comment) ToModel() model.Comment {
+	location := make([]string, len(c.Locations))
+	copy(location, c.Locations)
+	return model.Comment{
+		Identify: model.Identify{
+			ID: c.Identify,
+		},
+		Share:     c.Share,
+		Content:   c.Content,
+		IP:        c.IP,
+		UserAgent: c.UserAgent,
+		Locations: location,
+		Time:      c.Time,
+	}
+}

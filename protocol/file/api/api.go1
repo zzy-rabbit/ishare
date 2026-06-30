@@ -1,0 +1,17 @@
+package api
+
+import (
+	"github.com/zzy-rabbit/xtools/xplugin"
+)
+
+const (
+	PluginName = "ishare.protocol.file"
+)
+
+type Config struct {
+	Path string `json:"path"`
+}
+
+type IPlugin interface {
+	xplugin.IPlugin
+}

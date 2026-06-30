@@ -1,0 +1,20 @@
+package api
+
+import (
+	"context"
+	"github.com/zzy-rabbit/xtools/xerror"
+	"github.com/zzy-rabbit/xtools/xplugin"
+)
+
+const (
+	PluginName = "ishare.data.ip2region"
+)
+
+type Config struct {
+	Path string `json:"path"`
+}
+
+type IPlugin interface {
+	xplugin.IPlugin
+	Search(ctx context.Context, ip string) ([]string, xerror.IError)
+}

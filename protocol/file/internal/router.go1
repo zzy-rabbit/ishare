@@ -1,0 +1,19 @@
+package internal
+
+import (
+	"context"
+	"github.com/gofiber/fiber/v2"
+)
+
+func (s *service) registerRouter(ctx context.Context, fiberApp *fiber.App) {
+	fileGroup := fiberApp.Group(
+		"/system/api/v1/file",
+		s.IHttp.TimingMiddleware(func(ctx *fiber.Ctx) bool {
+			return true
+		}),
+	)
+	fileGroup.Post("/commit", s.CommitFile)
+	fileGroup.Delete("/revert", s.RevertFile)
+	fileGroup.Delete("", s.DeleteFile)
+	fileGroup.Get("", s.GetFile)
+}

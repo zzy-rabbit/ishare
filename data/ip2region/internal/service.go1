@@ -1,0 +1,25 @@
+package internal
+
+import (
+	"context"
+	"github.com/zzy-rabbit/xtools/xerror"
+	"strings"
+)
+
+func (s *service) Search(ctx context.Context, ip string) ([]string, xerror.IError) {
+	output, err := s.searcher.Search(ip)
+	if xerror.Error(err) {
+		s.ILogger.Error(ctx, "search ip %s fail %v", ip, err)
+		return nil, xerror.Extend(xerror.ErrInternalError, "search ip %s fail %v", ip, err)
+	}
+	temps := strings.Split(output, "|")
+	index := 2
+	for index >= 0 && temps[index] == "0" {
+		index--
+	}
+	if len(temps[:index+1]) <= 0 {
+		s.ILogger.Error(ctx, "search ip %s %+v empty", ip, temps)
+		return []string{"unknown"}, nil
+	}
+	return temps[:index+1], nil
+}

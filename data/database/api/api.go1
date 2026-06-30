@@ -1,0 +1,60 @@
+package api
+
+import (
+	"context"
+	"github.com/zzy-rabbit/ishare/model"
+	"github.com/zzy-rabbit/xtools/xerror"
+	"github.com/zzy-rabbit/xtools/xplugin"
+)
+
+const (
+	PluginName = "ishare.data.database"
+)
+
+type Config struct {
+	Driver string `json:"driver"`
+	Sqlite Sqlite `json:"sqlite"`
+}
+
+type Sqlite struct {
+	File     string `json:"file"`
+	User     string `json:"user"`
+	Password string `json:"password"`
+}
+
+type ISession interface {
+	GetTransaction(ctx context.Context) ITransaction
+
+	AddShare(ctx context.Context, share model.Share) (int, xerror.IError)
+	UpdateShare(ctx context.Context, share model.Share) xerror.IError
+	DeleteShares(ctx context.Context, shares ...model.Identify) xerror.IError
+	GetShares(ctx context.Context, condition model.ShareCondition) ([]model.Share, model.PageInfo, xerror.IError)
+	CheckSharePassword(ctx context.Context, share model.Share) (bool, xerror.IError)
+
+	AddComment(ctx context.Context, comment model.Comment) (int, xerror.IError)
+	UpdateComment(ctx context.Context, comment model.Comment) xerror.IError
+	DeleteComments(ctx context.Context, comments ...model.Identify) xerror.IError
+	GetComments(ctx context.Context, condition model.CommentCondition) ([]model.Comment, model.PageInfo, xerror.IError)
+
+	AddFile(ctx context.Context, file model.File) (int, xerror.IError)
+	UpdateFile(ctx context.Context, file model.File) xerror.IError
+	DeleteFiles(ctx context.Context, identifies ...model.Identify) xerror.IError
+	GetFiles(ctx context.Context, condition model.FileCondition) ([]model.File, model.PageInfo, xerror.IError)
+}
+
+type ITransaction interface {
+	ISession
+	Commit(ctx context.Context)
+	Rollback(ctx context.Context)
+}
+
+type IDatabase interface {
+	GetDB(ctx context.Context) ISession
+	GetTransaction(ctx context.Context) ITransaction
+	Close(ctx context.Context) xerror.IError
+}
+
+type IPlugin interface {
+	xplugin.IPlugin
+	IDatabase
+}

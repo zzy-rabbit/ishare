@@ -1,0 +1,42 @@
+package model
+
+type FileType int
+
+const (
+	FileTypeImage FileType = iota + 1
+	FileTypeVideo
+	FileTypeAudio
+)
+
+type FileCommit struct {
+	Session string   `json:"session"`
+	Type    FileType `json:"type"`
+}
+
+type FileBasic struct {
+	Name string   `json:"name"`
+	Type FileType `json:"type"`
+	Size int64    `json:"size"`
+	Mime string   `json:"mime"`
+	Path string   `json:"path"`
+}
+
+type FileExtern struct {
+	URL  string `json:"url"`
+	Hash string `json:"hash"`
+}
+
+type File struct {
+	Identify
+	FileBasic
+	FileExtern
+}
+
+type FileCondition struct {
+	*PageQuery
+	IDs   []string `json:"ids"`
+	Name  string   `json:"name"`
+	Types []string `json:"types"`
+	Mimes []string `json:"mimes"`
+	Path  string   `json:"path"`
+}

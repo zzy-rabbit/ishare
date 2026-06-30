@@ -1,0 +1,13 @@
+package api
+
+import (
+	"github.com/zzy-rabbit/xtools/xplugin"
+)
+
+const (
+	PluginName = "ishare.protocol.share"
+)
+
+type IPlugin interface {
+	xplugin.IPlugin
+}
