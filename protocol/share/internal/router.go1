@@ -57,6 +57,7 @@ func (s *service) registerRouter(ctx context.Context, fiberApp *fiber.App) {
 	shareGroup.Delete("", s.DeleteShares)
 	shareGroup.Get("", s.GetShares)
 	shareGroup.Post("authentication", s.CheckSharePassword)
+	shareGroup.Post("report", s.ReportShare)
 
 	//commentGroup := fiberApp.Group(
 	//	"/system/api/v1/comment",

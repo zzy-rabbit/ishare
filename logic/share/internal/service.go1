@@ -149,6 +149,11 @@ func (s *service) CheckSharePassword(ctx context.Context, share model.Share) (bo
 	return s.IDatabase.GetDB(ctx).CheckSharePassword(ctx, share)
 }
 
+func (s *service) ReportShare(ctx context.Context, identify model.Identify) xerror.IError {
+	defer xtrace.Trace(ctx)(identify)
+	return s.IDatabase.GetDB(ctx).ReportShare(ctx, identify)
+}
+
 func (s *service) AddComment(ctx context.Context, comment model.Comment) (model.Identify, xerror.IError) {
 	defer xtrace.Trace(ctx)(comment)
 	if comment.ID == "" {

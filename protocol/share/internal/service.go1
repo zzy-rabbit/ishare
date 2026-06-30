@@ -275,3 +275,26 @@ func (s *service) GetComments(ctx *fiber.Ctx) error {
 		},
 	})
 }
+
+func (s *service) ReportShare(ctx *fiber.Ctx) error {
+	var header bpmodel.Header
+	var identify model.Identify
+	xerr := s.IHttp.ParseBodyParams(ctx, &header, &identify)
+	if xerror.Error(xerr) {
+		s.ILogger.Error(ctx.UserContext(), "parse body params fail %v", xerr)
+		return ctx.JSON(&bpmodel.HttpResponse{
+			IError: xerr,
+		})
+	}
+
+	xerr = s.IShare.ReportShare(ctx.UserContext(), identify)
+	if xerror.Error(xerr) {
+		s.ILogger.Error(ctx.UserContext(), "report share %+v fail %v", identify, xerr)
+		return ctx.JSON(&bpmodel.HttpResponse{
+			IError: xerr,
+		})
+	}
+	return ctx.JSON(&bpmodel.HttpResponse{
+		IError: xerror.ErrSuccess,
+	})
+}

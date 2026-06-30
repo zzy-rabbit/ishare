@@ -30,6 +30,7 @@ type ISession interface {
 	DeleteShares(ctx context.Context, shares ...model.Identify) xerror.IError
 	GetShares(ctx context.Context, condition model.ShareCondition) ([]model.Share, model.PageInfo, xerror.IError)
 	CheckSharePassword(ctx context.Context, share model.Share) (bool, xerror.IError)
+	ReportShare(ctx context.Context, identify model.Identify) xerror.IError
 
 	AddComment(ctx context.Context, comment model.Comment) (int, xerror.IError)
 	UpdateComment(ctx context.Context, comment model.Comment) xerror.IError

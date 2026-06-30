@@ -25,6 +25,7 @@ type Share struct {
 	Text     string   `gorm:"column:text"`
 	CreateAt int64    `gorm:"column:create_at"`
 	Expire   int64    `gorm:"column:expire_at"`
+	Report   int64    `gorm:"column:report"`
 }
 
 func (*Share) TableName() string {

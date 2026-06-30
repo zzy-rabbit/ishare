@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/zzy-rabbit/ishare/model"
 	"github.com/zzy-rabbit/xtools/xerror"
+	"gorm.io/gorm"
 )
 
 func (s *session) AddShare(ctx context.Context, share model.Share) (int, xerror.IError) {
@@ -56,6 +57,7 @@ func (s *session) DeleteShares(ctx context.Context, identifies ...model.Identify
 
 func (s *session) GetShares(ctx context.Context, condition model.ShareCondition) ([]model.Share, model.PageInfo, xerror.IError) {
 	db := s.db
+	db = db.Model(&Share{}).Where("report == 0")
 	if len(condition.IDs) > 0 {
 		db = db.Where("identify in ?", condition.IDs)
 	}
@@ -68,7 +70,7 @@ func (s *session) GetShares(ctx context.Context, condition model.ShareCondition)
 
 	total := int64(0)
 	if condition.PageQuery != nil && condition.PageQuery.Num > 0 && condition.PageQuery.Size > 0 {
-		err := db.Model(&Share{}).Count(&total).Error
+		err := db.Count(&total).Error
 		if xerror.Error(err) {
 			s.logger.Error(ctx, "query shares count by condition %+v fail %v", condition, err)
 			return nil, model.PageInfo{}, transError(err)
@@ -102,6 +104,15 @@ func (s *session) CheckSharePassword(ctx context.Context, share model.Share) (bo
 		return false, transError(err)
 	}
 	return count > 0, nil
+}
+
+func (s *session) ReportShare(ctx context.Context, identify model.Identify) xerror.IError {
+	err := s.db.Model(&Share{}).Where("identify = ?", identify.ID).Update("report", gorm.Expr("report + 1")).Error
+	if xerror.Error(err) {
+		s.logger.Error(ctx, "report share %+v fail %v", identify, err)
+		return transError(err)
+	}
+	return nil
 }
 
 func (s *session) AddComment(ctx context.Context, comment model.Comment) (int, xerror.IError) {
