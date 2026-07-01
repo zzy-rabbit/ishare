@@ -15,8 +15,9 @@ import (
 	_ "github.com/zzy-rabbit/repository/data/ip2region"
 
 	_ "github.com/zzy-rabbit/repository/logic/file"
-	_ "github.com/zzy-rabbit/repository/logic/share"
+	_ "github.com/zzy-rabbit/repository/logic/repository"
 
 	_ "github.com/zzy-rabbit/repository/protocol/file"
-	_ "github.com/zzy-rabbit/repository/protocol/share"
+	_ "github.com/zzy-rabbit/repository/protocol/repository"
+	_ "github.com/zzy-rabbit/repository/protocol/web"
 )

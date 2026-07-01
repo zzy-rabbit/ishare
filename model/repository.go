@@ -1,6 +1,6 @@
 package model
 
-type Share struct {
+type Repository struct {
 	Identify
 	Files    []string `json:"files"`
 	Password string   `json:"password"`
@@ -10,14 +10,14 @@ type Share struct {
 	ExpireAt int64    `json:"expire_at"`
 }
 
-type ShareCondition struct {
+type RepositoryCondition struct {
 	*PageQuery
 	IDs          []string `json:"ids"`
 	ExpireAfter  int64    `json:"expire_after"`
 	ExpireBefore int64    `json:"expire_before"`
 }
 
-type ShareFilesCondition struct {
+type RepositoryFilesCondition struct {
 	Identify
 	Password string `json:"password"`
 	//SecretKey string `json:"secret_key"`
@@ -25,16 +25,16 @@ type ShareFilesCondition struct {
 
 type Comment struct {
 	Identify
-	Share     string   `json:"share"`
-	Content   string   `json:"content"`
-	IP        string   `json:"ip"`
-	UserAgent string   `json:"user_agent"`
-	Locations []string `json:"locations"`
-	Time      int64    `json:"time"`
+	Repository string   `json:"repository"`
+	Content    string   `json:"content"`
+	IP         string   `json:"ip"`
+	UserAgent  string   `json:"user_agent"`
+	Locations  []string `json:"locations"`
+	Time       int64    `json:"time"`
 }
 
 type CommentCondition struct {
 	*PageQuery
-	IDs    []string `json:"ids"`
-	Shares []string `json:"shares"`
+	IDs          []string `json:"ids"`
+	Repositories []string `json:"repositories"`
 }

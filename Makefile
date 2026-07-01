@@ -5,6 +5,7 @@ CGO_ENABLED=1
 OUT_DIR := output
 CONFIG_DIR := config
 THIRD_PARTY_DIR := thirdparty
+STATIC_DIR := static
 
 # 确保输出目录存在
 .PHONY: prepare
@@ -12,6 +13,7 @@ prepare:
 	mkdir -p $(OUT_DIR)
 	cp -r $(CONFIG_DIR) $(OUT_DIR)/
 	cp -r $(THIRD_PARTY_DIR) $(OUT_DIR)/
+	cp -r $(STATIC_DIR) $(OUT_DIR)/
 
 # 默认编译当前平台
 .PHONY: build

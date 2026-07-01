@@ -7,29 +7,29 @@ import (
 	"gorm.io/gorm"
 )
 
-func (s *session) AddShare(ctx context.Context, share model.Share) (int, xerror.IError) {
-	var table Share
-	table.FromModel(share)
+func (s *session) AddRepository(ctx context.Context, repository model.Repository) (int, xerror.IError) {
+	var table Repository
+	table.FromModel(repository)
 	err := s.db.Create(&table).Error
 	if xerror.Error(err) {
-		s.logger.Error(ctx, "add share %+v fail %v", share, err)
+		s.logger.Error(ctx, "add repository %+v fail %v", repository, err)
 		return 0, transError(err)
 	}
 	return table.ID, nil
 }
 
-func (s *session) UpdateShare(ctx context.Context, share model.Share) xerror.IError {
-	var table Share
-	table.FromModel(share)
+func (s *session) UpdateRepository(ctx context.Context, repository model.Repository) xerror.IError {
+	var table Repository
+	table.FromModel(repository)
 	err := s.db.Where("identify = ?", table.ID).Updates(&table).Error
 	if xerror.Error(err) {
-		s.logger.Error(ctx, "update share %+v fail %v", share, err)
+		s.logger.Error(ctx, "update repository %+v fail %v", repository, err)
 		return transError(err)
 	}
 	return nil
 }
 
-func (s *session) DeleteShares(ctx context.Context, identifies ...model.Identify) xerror.IError {
+func (s *session) DeleteRepositories(ctx context.Context, identifies ...model.Identify) xerror.IError {
 	ids := make([]string, 0, len(identifies))
 	for _, identify := range identifies {
 		ids = append(ids, identify.ID)
@@ -37,15 +37,15 @@ func (s *session) DeleteShares(ctx context.Context, identifies ...model.Identify
 
 	tx := s.getTransaction(ctx)
 
-	// 删除share
-	err := tx.db.Where("identify in ?", ids).Delete(&Share{}).Error
+	// 删除repository
+	err := tx.db.Where("identify in ?", ids).Delete(&Repository{}).Error
 	if xerror.Error(err) {
 		tx.Rollback(ctx)
-		s.logger.Error(ctx, "delete shares %+v fail %v", ids, err)
+		s.logger.Error(ctx, "delete repositories %+v fail %v", ids, err)
 		return transError(err)
 	}
 	// 删除comment
-	err = tx.db.Where("share in ?", ids).Delete(&Comment{}).Error
+	err = tx.db.Where("repository in ?", ids).Delete(&Comment{}).Error
 	if xerror.Error(err) {
 		tx.Rollback(ctx)
 		s.logger.Error(ctx, "delete comments %+v fail %v", ids, err)
@@ -55,9 +55,9 @@ func (s *session) DeleteShares(ctx context.Context, identifies ...model.Identify
 	return nil
 }
 
-func (s *session) GetShares(ctx context.Context, condition model.ShareCondition) ([]model.Share, model.PageInfo, xerror.IError) {
+func (s *session) GetRepositories(ctx context.Context, condition model.RepositoryCondition) ([]model.Repository, model.PageInfo, xerror.IError) {
 	db := s.db
-	db = db.Model(&Share{}).Where("report == 0")
+	db = db.Model(&Repository{}).Where("report == 0")
 	if len(condition.IDs) > 0 {
 		db = db.Where("identify in ?", condition.IDs)
 	}
@@ -72,44 +72,44 @@ func (s *session) GetShares(ctx context.Context, condition model.ShareCondition)
 	if condition.PageQuery != nil && condition.PageQuery.Num > 0 && condition.PageQuery.Size > 0 {
 		err := db.Count(&total).Error
 		if xerror.Error(err) {
-			s.logger.Error(ctx, "query shares count by condition %+v fail %v", condition, err)
+			s.logger.Error(ctx, "query repositories count by condition %+v fail %v", condition, err)
 			return nil, model.PageInfo{}, transError(err)
 		}
 		offset := (condition.PageQuery.Num - 1) * condition.PageQuery.Size
 		db = db.Offset(offset).Limit(condition.PageQuery.Size)
 	}
 
-	var tables []Share
+	var tables []Repository
 	err := db.Find(&tables).Error
 	if xerror.Error(err) {
-		s.logger.Error(ctx, "query shares by condition %+v fail %v", condition, err)
+		s.logger.Error(ctx, "query repositories by condition %+v fail %v", condition, err)
 		return nil, model.PageInfo{}, transError(err)
 	}
-	shares := make([]model.Share, 0, len(tables))
+	repositories := make([]model.Repository, 0, len(tables))
 	for _, table := range tables {
 		table.Password = ""
-		shares = append(shares, table.ToModel())
+		repositories = append(repositories, table.ToModel())
 	}
-	return shares, model.PageInfo{
+	return repositories, model.PageInfo{
 		Count: len(tables),
 		Total: int(total),
 	}, nil
 }
 
-func (s *session) CheckSharePassword(ctx context.Context, share model.Share) (bool, xerror.IError) {
+func (s *session) CheckRepositoryPassword(ctx context.Context, repository model.Repository) (bool, xerror.IError) {
 	var count int64
-	err := s.db.Model(&Share{}).Where("identify = ? and password = ?", share.ID, share.Password).Count(&count).Error
+	err := s.db.Model(&Repository{}).Where("identify = ? and password = ?", repository.ID, repository.Password).Count(&count).Error
 	if xerror.Error(err) {
-		s.logger.Error(ctx, "query share by condition %+v fail %v", share, err)
+		s.logger.Error(ctx, "query repository by condition %+v fail %v", repository, err)
 		return false, transError(err)
 	}
 	return count > 0, nil
 }
 
-func (s *session) ReportShare(ctx context.Context, identify model.Identify) xerror.IError {
-	err := s.db.Model(&Share{}).Where("identify = ?", identify.ID).Update("report", gorm.Expr("report + 1")).Error
+func (s *session) ReportRepository(ctx context.Context, identify model.Identify) xerror.IError {
+	err := s.db.Model(&Repository{}).Where("identify = ?", identify.ID).Update("report", gorm.Expr("report + 1")).Error
 	if xerror.Error(err) {
-		s.logger.Error(ctx, "report share %+v fail %v", identify, err)
+		s.logger.Error(ctx, "report repository %+v fail %v", identify, err)
 		return transError(err)
 	}
 	return nil

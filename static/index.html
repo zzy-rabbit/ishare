@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>图片暂存</title>
+
+    <script src="https://unpkg.com/tus-js-client/dist/tus.min.js"></script>
+    <link rel="stylesheet" href="/css/common.css">
+
+    <style>
+        /* 页面特有样式 */
+        .drop {
+            border: 2px dashed #6ea8fe;
+            border-radius: 14px;
+            background: #f8fbff;
+            padding: 45px;
+            text-align: center;
+            transition: .2s;
+            cursor: pointer;
+        }
+        .drop.drag { background: #e8f2ff; }
+        .drop svg { width: 60px; height: 60px; fill: #3b82f6; }
+        .drop p { color: #555; margin-top: 15px; }
+        #fileInput { display: none; }
+
+        .summary { margin-top: 15px; color: #666; font-size: 14px; }
+
+        .file-item {
+            position: relative;
+        }
+        .progress-container {
+            margin-top: 8px;
+            display: none;
+        }
+        .remove-btn {
+            width: 28px; height: 28px;
+            border: none; border-radius: 50%;
+            background: #ef4444; color: white;
+            cursor: pointer; font-size: 18px;
+        }
+        .remove-btn:hover { background: #dc2626; }
+    </style>
+</head>
+<body>
+<div class="toast" id="toast"></div>
+
+<div class="card">
+    <h1>图片暂存</h1>
+
+    <div class="item">
+        <div class="label">提取密码（4位字母或数字）</div>
+        <input id="password" type="password" maxlength="4" placeholder="请输入4位密码">
+    </div>
+
+    <div class="item">
+        <div class="label">有效期</div>
+        <select id="expire"></select>
+    </div>
+
+    <div class="item">
+        <div class="drop" id="drop">
+            <svg viewBox="0 0 24 24">
+                <path d="M5 20h14v-2H5zm7-18L5.33 9h3.84v4h5.66V9h3.84z" />
+            </svg>
+            <p>点击选择图片 或 拖拽图片到这里</p>
+            <input id="fileInput" type="file" accept="image/*" multiple>
+        </div>
+
+        <div class="summary" id="summary">尚未选择文件</div>
+        <div class="file-list" id="fileList"></div>
+    </div>
+
+    <button class="btn" id="uploadBtn">开始暂存</button>
+</div>
+
+<script src="/js/common.js"></script>
+<script>
+    const PASSWORD_REG = /^[A-Za-z0-9]{4}$/;
+    const MAX_FILE_SIZE = 1024 * 1024;
+    const files = [];
+    const fileIds = [];
+    let uploading = false;
+
+    const passwordInput = document.getElementById("password");
+    const expireSelect = document.getElementById("expire");
+    const fileInput = document.getElementById("fileInput");
+    const drop = document.getElementById("drop");
+    const fileList = document.getElementById("fileList");
+    const summary = document.getElementById("summary");
+    const uploadBtn = document.getElementById("uploadBtn");
+
+    initPasswordInput("password");
+
+    /* ---------- 初始化有效期 ---------- */
+    (function initExpire() {
+        const items = [
+            { text: "5 分钟", minute: 5 }, { text: "10 分钟", minute: 10 },
+            { text: "30 分钟", minute: 30 }, { text: "1 小时", minute: 60 },
+            { text: "2 小时", minute: 120 }, { text: "6 小时", minute: 360 },
+            { text: "12 小时", minute: 720 }, { text: "24 小时", minute: 1440 }
+        ];
+        for (const item of items) {
+            const option = document.createElement("option");
+            option.value = item.minute;
+            option.innerText = item.text;
+            expireSelect.appendChild(option);
+        }
+        expireSelect.value = "30";
+    })();
+
+    /* ---------- 拖拽 & 文件选择 ---------- */
+    drop.addEventListener("click", () => !uploading && fileInput.click());
+    drop.addEventListener("dragover", e => { e.preventDefault(); drop.classList.add("drag"); });
+    drop.addEventListener("dragleave", () => drop.classList.remove("drag"));
+    drop.addEventListener("drop", e => {
+        e.preventDefault(); drop.classList.remove("drag");
+        if (!uploading) addFiles(e.dataTransfer.files);
+    });
+    fileInput.addEventListener("change", e => {
+        addFiles(e.target.files); fileInput.value = "";
+    });
+
+    function addFiles(selected) {
+        for (const file of selected) {
+            if (!file.type.startsWith("image/")) { showToast(file.name + " 不是图片"); continue; }
+            if (file.size > MAX_FILE_SIZE) { showToast(file.name + " 超过1MB"); continue; }
+            if (files.some(f => f.name === file.name && f.size === file.size)) continue;
+            files.push(file);
+        }
+        renderFiles();
+    }
+
+    function removeFile(index) {
+        if (uploading) return;
+        files.splice(index, 1);
+        renderFiles();
+    }
+
+    function setFileProgress(index, percent) {
+        const item = document.querySelector(`.file-item[data-index="${index}"]`);
+        if (!item) return;
+        let progContainer = item.querySelector('.progress-container');
+        if (!progContainer) {
+            progContainer = document.createElement('div');
+            progContainer.className = 'progress-container';
+            progContainer.innerHTML = `
+                <div class="progress"><div class="progress-inner" style="width:0%"></div></div>
+                <div class="progress-text">0%</div>
+            `;
+            item.appendChild(progContainer);
+        }
+        progContainer.style.display = 'block';
+        const inner = progContainer.querySelector('.progress-inner');
+        const text = progContainer.querySelector('.progress-text');
+        inner.style.width = percent + '%';
+        text.innerText = percent.toFixed(1) + '%';
+    }
+
+    function renderFiles() {
+        fileList.innerHTML = "";
+        let total = 0;
+        files.forEach((file, index) => {
+            total += file.size;
+            const row = document.createElement("div");
+            row.className = "file-item";
+            row.dataset.index = index;
+            row.innerHTML = `
+                <div class="file-info">
+                    <div class="file-name">${escapeHtml(file.name)}</div>
+                    <div class="file-size">${formatSize(file.size)}</div>
+                </div>
+                <button class="remove-btn" onclick="removeFile(${index})">×</button>
+            `;
+            fileList.appendChild(row);
+        });
+
+        summary.innerText = files.length === 0
+            ? "尚未选择文件"
+            : `已选择 ${files.length} 个文件，总大小 ${formatSize(total)}`;
+    }
+
+    function setUploading(value) {
+        uploading = value;
+        uploadBtn.disabled = value;
+    }
+
+    /* ---------- tus 上传（支持单个文件进度） ---------- */
+    async function uploadSingleFile(file, index) {
+        return new Promise((resolve, reject) => {
+            const upload = new tus.Upload(file, {
+                endpoint: host + "/system/api/v1/upload",
+                retryDelays: [0, 1000, 3000, 5000],
+                metadata: { filename: file.name, filetype: file.type },
+                chunkSize: 2 * 1024 * 1024,
+                onError: reject,
+                onProgress(bytesUploaded, bytesTotal) {
+                    const percent = (bytesUploaded / bytesTotal) * 100;
+                    setFileProgress(index, percent);
+                },
+                async onSuccess() {
+                    try {
+                        const session = upload.url.split("/").pop();
+                        const fileId = await commitUpload(session);
+                        resolve(fileId);
+                    } catch (e) { reject(e); }
+                }
+            });
+
+            upload.findPreviousUploads().then(prev => {
+                if (prev.length) upload.resumeFromPreviousUpload(prev[0]);
+                upload.start();
+            });
+        });
+    }
+
+    async function commitUpload(session) {
+        const resp = await fetch(host + "/system/api/v1/file/commit", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ session, type: 1 })
+        });
+        if (!resp.ok) throw new Error("commit失败");
+        const json = await resp.json();
+        if (json.code !== 0) throw new Error(json.message);
+        return json.data.id;
+    }
+
+    async function createRepository() {
+        const expireMinute = Number(expireSelect.value);
+        const expireAt = Math.floor(Date.now() / 1000) + expireMinute * 60;
+        const resp = await fetch(host + "/system/api/v1/repository/add", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                id: "", files: fileIds, password: passwordInput.value,
+                expire_at: expireAt, title: "", text: ""
+            })
+        });
+        if (!resp.ok) throw new Error("创建失败");
+        const json = await resp.json();
+        if (json.code !== 0) throw new Error(json.message);
+        return json.data.id;
+    }
+
+    async function startUpload() {
+        if (uploading || !PASSWORD_REG.test(passwordInput.value)) {
+            showToast("密码必须为4位字母或数字");
+            return;
+        }
+        if (files.length === 0) {
+            showToast("请选择图片"); return;
+        }
+
+        fileIds.length = 0;
+        setUploading(true);
+        uploadBtn.innerText = "准备上传...";
+
+        try {
+            for (let i = 0; i < files.length; i++) {
+                uploadBtn.innerText = `上传 ${i + 1}/${files.length}`;
+                const fileId = await uploadSingleFile(files[i], i);
+                fileIds.push(fileId);
+            }
+
+            uploadBtn.innerText = "创建暂存...";
+            const repositoryId = await createRepository();
+            showToast("创建成功");
+            setTimeout(() => window.location.href = host + "/" + repositoryId, 500);
+        } catch (e) {
+            console.error(e);
+            showToast(e.message || "上传失败");
+            setUploading(false);
+            uploadBtn.innerText = "开始暂存";
+        }
+    }
+
+    uploadBtn.addEventListener("click", startUpload);
+    passwordInput.addEventListener("keydown", e => e.key === "Enter" && startUpload());
+
+    document.addEventListener("dragover", e => e.preventDefault());
+    document.addEventListener("drop", e => e.preventDefault());
+
+    renderFiles();
+</script>
+</body>
+</html>

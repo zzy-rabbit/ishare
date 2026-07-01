@@ -5,7 +5,7 @@ import (
 )
 
 const (
-	PluginName = "repository.protocol.share"
+	PluginName = "repository.protocol.repository"
 )
 
 type IPlugin interface {

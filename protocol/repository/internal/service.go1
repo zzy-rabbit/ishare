@@ -8,10 +8,10 @@ import (
 	"time"
 )
 
-func (s *service) AddShare(ctx *fiber.Ctx) error {
+func (s *service) AddRepository(ctx *fiber.Ctx) error {
 	var header bpmodel.Header
-	var share model.Share
-	xerr := s.IHttp.ParseBodyParams(ctx, &header, &share)
+	var repository model.Repository
+	xerr := s.IHttp.ParseBodyParams(ctx, &header, &repository)
 	if xerror.Error(xerr) {
 		s.ILogger.Error(ctx.UserContext(), "parse body params fail %v", xerr)
 		return ctx.JSON(&bpmodel.HttpResponse{
@@ -19,18 +19,18 @@ func (s *service) AddShare(ctx *fiber.Ctx) error {
 		})
 	}
 
-	share.CreateAt = time.Now().Unix()
-	if share.ExpireAt < share.CreateAt {
-		xerr = xerror.Extend(xerror.ErrInvalidParam, "expire time %d must be greater than create time %d", share.ExpireAt, share.CreateAt)
-		s.ILogger.Error(ctx.UserContext(), "%+v %v", share, xerr)
+	repository.CreateAt = time.Now().Unix()
+	if repository.ExpireAt < repository.CreateAt {
+		xerr = xerror.Extend(xerror.ErrInvalidParam, "expire time %d must be greater than create time %d", repository.ExpireAt, repository.CreateAt)
+		s.ILogger.Error(ctx.UserContext(), "%+v %v", repository, xerr)
 		return ctx.JSON(&bpmodel.HttpResponse{
 			IError: xerr,
 		})
 	}
 
-	identify, xerr := s.repository.AddShare(ctx.UserContext(), share)
+	identify, xerr := s.IRepository.AddRepository(ctx.UserContext(), repository)
 	if xerror.Error(xerr) {
-		s.ILogger.Error(ctx.UserContext(), "add share %+v fail %v", share, xerr)
+		s.ILogger.Error(ctx.UserContext(), "add repository %+v fail %v", repository, xerr)
 		return ctx.JSON(&bpmodel.HttpResponse{
 			IError: xerr,
 		})
@@ -41,10 +41,10 @@ func (s *service) AddShare(ctx *fiber.Ctx) error {
 	})
 }
 
-func (s *service) UpdateShare(ctx *fiber.Ctx) error {
+func (s *service) UpdateRepository(ctx *fiber.Ctx) error {
 	var header bpmodel.Header
-	var share model.Share
-	xerr := s.IHttp.ParseBodyParams(ctx, &header, &share)
+	var repository model.Repository
+	xerr := s.IHttp.ParseBodyParams(ctx, &header, &repository)
 	if xerror.Error(xerr) {
 		s.ILogger.Error(ctx.UserContext(), "parse body params fail %v", xerr)
 		return ctx.JSON(&bpmodel.HttpResponse{
@@ -52,9 +52,9 @@ func (s *service) UpdateShare(ctx *fiber.Ctx) error {
 		})
 	}
 
-	xerr = s.repository.UpdateShare(ctx.UserContext(), share)
+	xerr = s.IRepository.UpdateRepository(ctx.UserContext(), repository)
 	if xerror.Error(xerr) {
-		s.ILogger.Error(ctx.UserContext(), "update share %+v fail %v", share, xerr)
+		s.ILogger.Error(ctx.UserContext(), "update repository %+v fail %v", repository, xerr)
 		return ctx.JSON(&bpmodel.HttpResponse{
 			IError: xerr,
 		})
@@ -64,10 +64,10 @@ func (s *service) UpdateShare(ctx *fiber.Ctx) error {
 	})
 }
 
-func (s *service) DeleteShares(ctx *fiber.Ctx) error {
+func (s *service) DeleteRepositories(ctx *fiber.Ctx) error {
 	var header bpmodel.Header
-	var shares []model.Identify
-	xerr := s.IHttp.ParseBodyParams(ctx, &header, &shares)
+	var repositories []model.Identify
+	xerr := s.IHttp.ParseBodyParams(ctx, &header, &repositories)
 	if xerror.Error(xerr) {
 		s.ILogger.Error(ctx.UserContext(), "parse body params fail %v", xerr)
 		return ctx.JSON(&bpmodel.HttpResponse{
@@ -75,9 +75,9 @@ func (s *service) DeleteShares(ctx *fiber.Ctx) error {
 		})
 	}
 
-	xerr = s.repository.DeleteShares(ctx.UserContext(), shares...)
+	xerr = s.IRepository.DeleteRepositories(ctx.UserContext(), repositories...)
 	if xerror.Error(xerr) {
-		s.ILogger.Error(ctx.UserContext(), "delete shares %+v fail %v", shares, xerr)
+		s.ILogger.Error(ctx.UserContext(), "delete repositories %+v fail %v", repositories, xerr)
 		return ctx.JSON(&bpmodel.HttpResponse{
 			IError: xerr,
 		})
@@ -87,9 +87,9 @@ func (s *service) DeleteShares(ctx *fiber.Ctx) error {
 	})
 }
 
-func (s *service) GetShares(ctx *fiber.Ctx) error {
+func (s *service) GetRepositories(ctx *fiber.Ctx) error {
 	var header bpmodel.Header
-	var condition model.ShareCondition
+	var condition model.RepositoryCondition
 	xerr := s.IHttp.ParseQueryParams(ctx, &header, &condition)
 	if xerror.Error(xerr) {
 		s.ILogger.Error(ctx.UserContext(), "parse query params fail %v", xerr)
@@ -101,25 +101,25 @@ func (s *service) GetShares(ctx *fiber.Ctx) error {
 	// 查找未过期的内容
 	condition.ExpireAfter = time.Now().Unix()
 	condition.ExpireBefore = 0
-	shares, page, xerr := s.repository.GetShares(ctx.UserContext(), condition)
+	repositories, page, xerr := s.IRepository.GetRepositories(ctx.UserContext(), condition)
 	if xerror.Error(xerr) {
-		s.ILogger.Error(ctx.UserContext(), "get shares %+v fail %v", condition, xerr)
+		s.ILogger.Error(ctx.UserContext(), "get repositories %+v fail %v", condition, xerr)
 		return ctx.JSON(&bpmodel.HttpResponse{
 			IError: xerr,
 		})
 	}
 	return ctx.JSON(&bpmodel.HttpResponse{
 		IError: xerror.ErrSuccess,
-		Data: model.PaginatedData[model.Share]{
+		Data: model.PaginatedData[model.Repository]{
 			PageInfo: page,
-			List:     shares,
+			List:     repositories,
 		},
 	})
 }
 
-func (s *service) GetShareFiles(ctx *fiber.Ctx) error {
+func (s *service) GetRepositoryFiles(ctx *fiber.Ctx) error {
 	var header bpmodel.Header
-	var condition model.ShareFilesCondition
+	var condition model.RepositoryFilesCondition
 	xerr := s.IHttp.ParseBodyParams(ctx, &header, &condition)
 	if xerror.Error(xerr) {
 		s.ILogger.Error(ctx.UserContext(), "parse query params fail %v", xerr)
@@ -129,9 +129,9 @@ func (s *service) GetShareFiles(ctx *fiber.Ctx) error {
 	}
 
 	// 查找未过期的内容
-	content, xerr := s.repository.GetShareFiles(ctx.UserContext(), condition)
+	content, xerr := s.IRepository.GetRepositoryFiles(ctx.UserContext(), condition)
 	if xerror.Error(xerr) {
-		s.ILogger.Error(ctx.UserContext(), "get shares %+v fail %v", condition.ID, xerr)
+		s.ILogger.Error(ctx.UserContext(), "get repositories %+v fail %v", condition.ID, xerr)
 		return ctx.JSON(&bpmodel.HttpResponse{
 			IError: xerr,
 		})
@@ -139,10 +139,10 @@ func (s *service) GetShareFiles(ctx *fiber.Ctx) error {
 	return ctx.Send(content)
 }
 
-func (s *service) CheckSharePassword(ctx *fiber.Ctx) error {
+func (s *service) CheckRepositoryPassword(ctx *fiber.Ctx) error {
 	var header bpmodel.Header
-	var share model.Share
-	xerr := s.IHttp.ParseBodyParams(ctx, &header, &share)
+	var repository model.Repository
+	xerr := s.IHttp.ParseBodyParams(ctx, &header, &repository)
 	if xerror.Error(xerr) {
 		s.ILogger.Error(ctx.UserContext(), "parse body params fail %v", xerr)
 		return ctx.JSON(&bpmodel.HttpResponse{
@@ -150,9 +150,9 @@ func (s *service) CheckSharePassword(ctx *fiber.Ctx) error {
 		})
 	}
 
-	ok, xerr := s.repository.CheckSharePassword(ctx.UserContext(), share)
+	ok, xerr := s.IRepository.CheckRepositoryPassword(ctx.UserContext(), repository)
 	if xerror.Error(xerr) {
-		s.ILogger.Error(ctx.UserContext(), "update share %+v fail %v", share, xerr)
+		s.ILogger.Error(ctx.UserContext(), "update repository %+v fail %v", repository, xerr)
 		return ctx.JSON(&bpmodel.HttpResponse{
 			IError: xerr,
 		})
@@ -189,7 +189,7 @@ func (s *service) AddComment(ctx *fiber.Ctx) error {
 	}
 	comment.Locations = locations
 
-	identify, xerr := s.repository.AddComment(ctx.UserContext(), comment)
+	identify, xerr := s.IRepository.AddComment(ctx.UserContext(), comment)
 	if xerror.Error(xerr) {
 		s.ILogger.Error(ctx.UserContext(), "add comment %+v fail %v", comment, xerr)
 		return ctx.JSON(&bpmodel.HttpResponse{
@@ -213,7 +213,7 @@ func (s *service) UpdateComment(ctx *fiber.Ctx) error {
 		})
 	}
 
-	xerr = s.repository.UpdateComment(ctx.UserContext(), comment)
+	xerr = s.IRepository.UpdateComment(ctx.UserContext(), comment)
 	if xerror.Error(xerr) {
 		s.ILogger.Error(ctx.UserContext(), "update comment %+v fail %v", comment, xerr)
 		return ctx.JSON(&bpmodel.HttpResponse{
@@ -236,7 +236,7 @@ func (s *service) DeleteComments(ctx *fiber.Ctx) error {
 		})
 	}
 
-	xerr = s.repository.DeleteComments(ctx.UserContext(), comments...)
+	xerr = s.IRepository.DeleteComments(ctx.UserContext(), comments...)
 	if xerror.Error(xerr) {
 		s.ILogger.Error(ctx.UserContext(), "delete comments %+v fail %v", comments, xerr)
 		return ctx.JSON(&bpmodel.HttpResponse{
@@ -259,7 +259,7 @@ func (s *service) GetComments(ctx *fiber.Ctx) error {
 		})
 	}
 
-	comments, page, xerr := s.repository.GetComments(ctx.UserContext(), condition)
+	comments, page, xerr := s.IRepository.GetComments(ctx.UserContext(), condition)
 	if xerror.Error(xerr) {
 		s.ILogger.Error(ctx.UserContext(), "get comments %+v fail %v", condition, xerr)
 		return ctx.JSON(&bpmodel.HttpResponse{
@@ -276,7 +276,7 @@ func (s *service) GetComments(ctx *fiber.Ctx) error {
 	})
 }
 
-func (s *service) ReportShare(ctx *fiber.Ctx) error {
+func (s *service) ReportRepository(ctx *fiber.Ctx) error {
 	var header bpmodel.Header
 	var identify model.Identify
 	xerr := s.IHttp.ParseBodyParams(ctx, &header, &identify)
@@ -287,9 +287,9 @@ func (s *service) ReportShare(ctx *fiber.Ctx) error {
 		})
 	}
 
-	xerr = s.repository.ReportShare(ctx.UserContext(), identify)
+	xerr = s.IRepository.ReportRepository(ctx.UserContext(), identify)
 	if xerror.Error(xerr) {
-		s.ILogger.Error(ctx.UserContext(), "report share %+v fail %v", identify, xerr)
+		s.ILogger.Error(ctx.UserContext(), "report repository %+v fail %v", identify, xerr)
 		return ctx.JSON(&bpmodel.HttpResponse{
 			IError: xerr,
 		})

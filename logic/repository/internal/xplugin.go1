@@ -2,21 +2,22 @@ package internal
 
 import (
 	"context"
-	httpApi "github.com/zzy-rabbit/bp/protocol/http/api"
+	"encoding/json"
+	reportApi "github.com/zzy-rabbit/bp/protocol/report/api"
 	logApi "github.com/zzy-rabbit/bp/tool/log/api"
 	databaseApi "github.com/zzy-rabbit/repository/data/database/api"
-	regionApi "github.com/zzy-rabbit/repository/data/ip2region/api"
-	shareApi "github.com/zzy-rabbit/repository/logic/share/api"
-	"github.com/zzy-rabbit/repository/protocol/share/api"
+	fileApi "github.com/zzy-rabbit/repository/logic/file/api"
+	"github.com/zzy-rabbit/repository/logic/repository/api"
 	"github.com/zzy-rabbit/xtools/xerror"
 )
 
 type service struct {
-	repository shareApi.IPlugin    `xplugin:"repository.logic.share"`
-	ILogger    logApi.IPlugin      `xplugin:"bp.tool.log"`
-	IHttp      httpApi.IPlugin     `xplugin:"bp.protocol.http"`
-	IRegion    regionApi.IPlugin   `xplugin:"repository.data.ip2region"`
-	IDatabase  databaseApi.IPlugin `xplugin:"repository.data.database"`
+	IFile     fileApi.IPlugin     `xplugin:"repository.logic.file"`
+	IDatabase databaseApi.IPlugin `xplugin:"repository.data.database"`
+	IReport   reportApi.IPlugin   `xplugin:"bp.protocol.report"`
+	ILogger   logApi.IPlugin      `xplugin:"bp.tool.log"`
+	config    api.Config
+	cancel    context.CancelFunc
 }
 
 func New(ctx context.Context) api.IPlugin {
@@ -28,7 +29,15 @@ func (s *service) GetName(ctx context.Context) string {
 }
 
 func (s *service) Init(ctx context.Context, initParam string) xerror.IError {
-	s.IHttp.Register(ctx, s.registerRouter)
+	err := json.Unmarshal([]byte(initParam), &s.config)
+	if xerror.Error(err) {
+		s.ILogger.Error(ctx, "plugin %s init error: %s", s.GetName(ctx), err.Error())
+		return xerror.Extend(xerror.ErrInvalidParam, "parse init param fail %v", err)
+	}
+
+	ctx, s.cancel = context.WithCancel(ctx)
+	s.startMonitor(ctx)
+
 	s.ILogger.Info(ctx, "plugin %s init success", s.GetName(ctx))
 	return nil
 }
@@ -39,6 +48,7 @@ func (s *service) Run(ctx context.Context, runParam string) xerror.IError {
 }
 
 func (s *service) Stop(ctx context.Context, stopParam string) xerror.IError {
+	s.cancel()
 	s.ILogger.Info(ctx, "plugin %s stop success", s.GetName(ctx))
 	return nil
 }

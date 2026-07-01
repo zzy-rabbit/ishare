@@ -1,0 +1,52 @@
+package internal
+
+import (
+	"context"
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/template/html/v2"
+	"github.com/zzy-rabbit/repository/model"
+	"github.com/zzy-rabbit/xtools/xerror"
+	"io/fs"
+	"net/http"
+)
+
+func (s *service) setConfig(ctx context.Context, fiberConfig *fiber.Config) {
+	engine := html.NewFileSystem(http.FS(s.pageFs), ".html")
+	engine.Reload(true)
+	fiberConfig.Views = engine
+}
+
+func (s *service) sendPage(ctx *fiber.Ctx, name string) error {
+	data, err := fs.ReadFile(s.pageFs, name)
+	if err != nil {
+		s.ILogger.Error(ctx.UserContext(), "read page error", err)
+		return fiber.ErrNotFound
+	}
+	ctx.Type("html", "utf-8")
+	return ctx.Send(data)
+}
+
+func (s *service) registerRouter(ctx context.Context, fiberApp *fiber.App) {
+	//fiberApp.Use("/icon", filesystem.New(filesystem.Config{
+	//	Root: http.FS(s.iconFs),
+	//}))
+	fiberApp.Get("/", func(c *fiber.Ctx) error {
+		return c.Render("index", fiber.Map{
+			"Title": "首页",
+			"Name":  "Fiber",
+		})
+	})
+	fiberApp.Get("/:repository", func(c *fiber.Ctx) error {
+		repositoryId := c.Params("repository")
+		repositories, _, xerr := s.IRepository.GetRepositories(ctx, model.RepositoryCondition{IDs: []string{repositoryId}})
+		if xerror.Error(xerr, xerror.ErrNotFound) {
+			s.ILogger.Error(ctx, "get repository %s fail %v", repositoryId, xerr)
+			return s.sendPage(c, "error.html")
+		} else if xerror.Error(xerr) || len(repositories) == 0 {
+			s.ILogger.Error(ctx, "repository %s not found %v", repositoryId, xerr)
+			return s.sendPage(c, "404.html")
+		}
+		return s.sendPage(c, "repository.html")
+	})
+	fiberApp.Static("/", "./static/")
+}

@@ -16,7 +16,7 @@ func (*File) TableName() string {
 	return "table_file"
 }
 
-type Share struct {
+type Repository struct {
 	ID       int      `gorm:"column:id;primaryKey;autoIncrement"`
 	Identify string   `gorm:"column:identify;unique"`
 	Files    []string `gorm:"column:files;serializer:json"`
@@ -28,19 +28,19 @@ type Share struct {
 	Report   int64    `gorm:"column:report"`
 }
 
-func (*Share) TableName() string {
-	return "table_share"
+func (*Repository) TableName() string {
+	return "table_repository"
 }
 
 type Comment struct {
-	ID        int      `gorm:"column:id;primaryKey;autoIncrement"`
-	Identify  string   `gorm:"column:identify;unique"`
-	Share     string   `gorm:"column:share"`
-	Content   string   `gorm:"column:content"`
-	UserAgent string   `gorm:"column:user_agent"`
-	Locations []string `gorm:"column:locations;serializer:json"`
-	IP        string   `gorm:"column:ip"`
-	Time      int64    `gorm:"column:time"`
+	ID         int      `gorm:"column:id;primaryKey;autoIncrement"`
+	Identify   string   `gorm:"column:identify;unique"`
+	Repository string   `gorm:"column:repository"`
+	Content    string   `gorm:"column:content"`
+	UserAgent  string   `gorm:"column:user_agent"`
+	Locations  []string `gorm:"column:locations;serializer:json"`
+	IP         string   `gorm:"column:ip"`
+	Time       int64    `gorm:"column:time"`
 }
 
 func (*Comment) TableName() string {

@@ -1,0 +1,38 @@
+package internal
+
+import (
+	"context"
+	"github.com/zzy-rabbit/repository/model"
+	"github.com/zzy-rabbit/xtools/xerror"
+	"time"
+)
+
+func (s *service) startMonitor(ctx context.Context) {
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-time.After(time.Second * time.Duration(s.config.Interval)):
+				repositories, _, xerr := s.GetRepositories(ctx, model.RepositoryCondition{ExpireBefore: time.Now().Unix()})
+				if xerror.Error(xerr) {
+					s.ILogger.Info(ctx, "get expire repositories fail %v", xerr)
+					continue
+				}
+				if len(repositories) == 0 {
+					continue
+				}
+				identifies := make([]model.Identify, 0, len(repositories))
+				for _, repository := range repositories {
+					identifies = append(identifies, repository.Identify)
+				}
+				s.ILogger.Info(ctx, "delete expire repositories %v", identifies)
+				xerr = s.DeleteRepositories(ctx, identifies...)
+				if xerror.Error(xerr) {
+					s.ILogger.Info(ctx, "delete expire repositories fail %v", xerr)
+					continue
+				}
+			}
+		}
+	}()
+}

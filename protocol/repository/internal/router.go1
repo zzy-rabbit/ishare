@@ -35,29 +35,29 @@ func (s *service) AccessMiddleware() fiber.Handler {
 }
 
 func (s *service) registerRouter(ctx context.Context, fiberApp *fiber.App) {
-	shareFileGroup := fiberApp.Group(
-		"/system/api/v1/share/file",
+	repositoryFileGroup := fiberApp.Group(
+		"/system/api/v1/repository/file",
 		s.IHttp.CORSMiddleware(),
 		s.IHttp.TimingMiddleware(func(ctx *fiber.Ctx) bool {
 			return true
 		}),
 		s.AccessMiddleware(),
 	)
-	shareFileGroup.Post("", s.GetShareFiles)
+	repositoryFileGroup.Post("", s.GetRepositoryFiles)
 
-	shareGroup := fiberApp.Group(
-		"/system/api/v1/share",
+	repositoryGroup := fiberApp.Group(
+		"/system/api/v1/repository",
 		s.IHttp.CORSMiddleware(),
 		s.IHttp.TimingMiddleware(),
 		s.AccessMiddleware(),
 	)
 
-	shareGroup.Post("add", s.AddShare)
-	shareGroup.Post("update", s.UpdateShare)
-	shareGroup.Delete("", s.DeleteShares)
-	shareGroup.Get("", s.GetShares)
-	shareGroup.Post("authentication", s.CheckSharePassword)
-	shareGroup.Post("report", s.ReportShare)
+	repositoryGroup.Post("add", s.AddRepository)
+	repositoryGroup.Post("update", s.UpdateRepository)
+	repositoryGroup.Delete("", s.DeleteRepositories)
+	repositoryGroup.Get("", s.GetRepositories)
+	repositoryGroup.Post("authentication", s.CheckRepositoryPassword)
+	repositoryGroup.Post("report", s.ReportRepository)
 
 	//commentGroup := fiberApp.Group(
 	//	"/system/api/v1/comment",

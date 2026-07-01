@@ -1,0 +1,30 @@
+package internal
+
+import (
+	"context"
+	"github.com/zzy-rabbit/xtools/xerror"
+	"io/fs"
+	"os"
+)
+
+////go:embed resources
+//var resourcesFS embed.FS
+
+var resourcesFS = os.DirFS(".")
+
+func (s *service) prepareFileSystem(ctx context.Context) xerror.IError {
+	pageFS, err := fs.Sub(resourcesFS, "static")
+	if xerror.Error(err) {
+		s.ILogger.Error(ctx, "subtree to page file system fail %v", err)
+		return xerror.Extend(xerror.ErrInternalError, "subtree to page file system fail %v", err)
+	}
+	s.pageFs = pageFS
+
+	//iconFS, err := fs.Sub(resourcesFS, "resources/icon")
+	//if xerror.Error(err) {
+	//	s.ILogger.Error(ctx, "subtree to icon file system fail %v", err)
+	//	return xerror.Extend(xerror.ErrInternalError, "subtree to icon file system fail %v", err)
+	//}
+	//s.iconFs = iconFS
+	return nil
+}

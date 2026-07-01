@@ -55,7 +55,7 @@
             "stop_param": ""
         },
         {
-            "plugin_name": "repository.logic.share",
+            "plugin_name": "repository.logic.repository",
             "init_param": "{\"interval\":60}",
             "run_param": "",
             "stop_param": ""
@@ -67,7 +67,13 @@
             "stop_param": ""
         },
         {
-            "plugin_name": "repository.protocol.share",
+            "plugin_name": "repository.protocol.repository",
+            "init_param": "",
+            "run_param": "",
+            "stop_param": ""
+        },
+        {
+            "plugin_name": "repository.protocol.web",
             "init_param": "",
             "run_param": "",
             "stop_param": ""

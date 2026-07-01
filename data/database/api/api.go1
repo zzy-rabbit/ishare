@@ -25,12 +25,12 @@ type Sqlite struct {
 type ISession interface {
 	GetTransaction(ctx context.Context) ITransaction
 
-	AddShare(ctx context.Context, share model.Share) (int, xerror.IError)
-	UpdateShare(ctx context.Context, share model.Share) xerror.IError
-	DeleteShares(ctx context.Context, shares ...model.Identify) xerror.IError
-	GetShares(ctx context.Context, condition model.ShareCondition) ([]model.Share, model.PageInfo, xerror.IError)
-	CheckSharePassword(ctx context.Context, share model.Share) (bool, xerror.IError)
-	ReportShare(ctx context.Context, identify model.Identify) xerror.IError
+	AddRepository(ctx context.Context, repository model.Repository) (int, xerror.IError)
+	UpdateRepository(ctx context.Context, repository model.Repository) xerror.IError
+	DeleteRepositories(ctx context.Context, repositories ...model.Identify) xerror.IError
+	GetRepositories(ctx context.Context, condition model.RepositoryCondition) ([]model.Repository, model.PageInfo, xerror.IError)
+	CheckRepositoryPassword(ctx context.Context, repository model.Repository) (bool, xerror.IError)
+	ReportRepository(ctx context.Context, identify model.Identify) xerror.IError
 
 	AddComment(ctx context.Context, comment model.Comment) (int, xerror.IError)
 	UpdateComment(ctx context.Context, comment model.Comment) xerror.IError

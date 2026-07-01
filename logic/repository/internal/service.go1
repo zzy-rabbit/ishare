@@ -1,0 +1,194 @@
+package internal
+
+import (
+	"context"
+	"fmt"
+	"github.com/google/uuid"
+	"github.com/zzy-rabbit/repository/model"
+	"github.com/zzy-rabbit/xtools/xerror"
+	"github.com/zzy-rabbit/xtools/xfile"
+	"github.com/zzy-rabbit/xtools/xtrace"
+	"os"
+	"path/filepath"
+	"time"
+)
+
+func (s *service) AddRepository(ctx context.Context, repository model.Repository) (model.Identify, xerror.IError) {
+	defer xtrace.Trace(ctx)(repository)
+	if repository.ID == "" {
+		repository.ID = uuid.New().String()
+	}
+
+	files, _, xerr := s.IFile.GetFiles(ctx, model.FileCondition{IDs: repository.Files})
+	if xerror.Error(xerr) {
+		s.ILogger.Error(ctx, "get file %s fail %v", repository.Files, xerr)
+		return model.Identify{}, xerr
+	}
+	if len(files) == 0 {
+		s.ILogger.Error(ctx, "file %s not found", repository.Files)
+		return model.Identify{}, xerror.Extend(xerror.ErrNotFound, "file %s not found", repository.Files)
+	}
+
+	_, xerr = s.IDatabase.GetDB(ctx).AddRepository(ctx, repository)
+	if xerror.Error(xerr) {
+		s.ILogger.Error(ctx, "add repository %+v fail %v", repository, xerr)
+		return model.Identify{}, xerr
+	}
+	return repository.Identify, nil
+}
+
+func (s *service) UpdateRepository(ctx context.Context, repository model.Repository) xerror.IError {
+	defer xtrace.Trace(ctx)(repository)
+	return s.IDatabase.GetDB(ctx).UpdateRepository(ctx, repository)
+}
+
+func (s *service) DeleteRepositories(ctx context.Context, identifies ...model.Identify) xerror.IError {
+	defer xtrace.Trace(ctx)(identifies)
+
+	// 删除repository记录
+	ids := make([]string, 0, len(identifies))
+	for _, identify := range identifies {
+		ids = append(ids, identify.ID)
+	}
+	repositories, _, xerr := s.IDatabase.GetDB(ctx).GetRepositories(ctx, model.RepositoryCondition{IDs: ids})
+	if xerror.Error(xerr) {
+		s.ILogger.Error(ctx, "get repositories %+v fail %v", ids, xerr)
+		return xerr
+	}
+	xerr = s.IDatabase.GetDB(ctx).DeleteRepositories(ctx, identifies...)
+	if xerror.Error(xerr) {
+		s.ILogger.Error(ctx, "delete repositories %+v fail %v", ids, xerr)
+		return xerr
+	}
+
+	// 删除文件
+	files := make([]model.Identify, 0, len(repositories))
+	for _, repository := range repositories {
+		for _, file := range repository.Files {
+			files = append(files, model.Identify{ID: file})
+		}
+	}
+	xerr = s.IFile.DeleteFiles(ctx, files...)
+	if xerror.Error(xerr) {
+		s.ILogger.Error(ctx, "delete files %+v fail %v", files, xerr)
+	}
+	return nil
+}
+
+func (s *service) GetRepositories(ctx context.Context, condition model.RepositoryCondition) ([]model.Repository, model.PageInfo, xerror.IError) {
+	defer xtrace.Trace(ctx)(condition)
+	return s.IDatabase.GetDB(ctx).GetRepositories(ctx, condition)
+}
+
+func (s *service) GetRepositoryFiles(ctx context.Context, condition model.RepositoryFilesCondition) ([]byte, xerror.IError) {
+	defer xtrace.Trace(ctx)(condition)
+
+	ok, xerr := s.IDatabase.GetDB(ctx).CheckRepositoryPassword(ctx, model.Repository{
+		Identify: condition.Identify,
+		Password: condition.Password,
+	})
+	if xerror.Error(xerr) {
+		s.ILogger.Error(ctx, "check repository %s password fail %v", condition.Identify, xerr)
+		return nil, xerr
+	}
+	if !ok {
+		s.ILogger.Error(ctx, "repository %+v password error", condition.Identify)
+		return nil, xerror.Extend(xerror.ErrPermissionDenied, "repository %s access denied", condition.ID)
+	}
+
+	// 查询共享
+	repositoryCondition := model.RepositoryCondition{
+		IDs:          []string{condition.ID},
+		ExpireAfter:  time.Now().Unix(),
+		ExpireBefore: 0,
+	}
+	repositories, _, xerr := s.IDatabase.GetDB(ctx).GetRepositories(ctx, repositoryCondition)
+	if xerror.Error(xerr) {
+		s.ILogger.Error(ctx, "get repository %+v fail %v", condition.ID, xerr)
+		return nil, xerr
+	}
+	if len(repositories) == 0 {
+		s.ILogger.Error(ctx, "repository %s not found", condition.ID)
+		return nil, xerror.Extend(xerror.ErrNotFound, "repository %s not found", condition.ID)
+	}
+
+	// 查询文件
+	files, _, xerr := s.IFile.GetFiles(ctx, model.FileCondition{IDs: repositories[0].Files})
+	if xerror.Error(xerr) {
+		s.ILogger.Error(ctx, "get file %s fail %v", repositories[0].Files, xerr)
+		return nil, xerr
+	}
+	if len(files) == 0 {
+		s.ILogger.Error(ctx, "repository %s file %+v not found", condition.ID, repositories[0].Files)
+		return nil, xerror.Extend(xerror.ErrNotFound, "repository %s do not find any files", condition.ID)
+	}
+
+	// 构建zip文件
+	filePaths := make([]string, 0, len(files))
+	for _, file := range files {
+		filePaths = append(filePaths, file.Path)
+	}
+	zipFilePath := filepath.Join(os.TempDir(), fmt.Sprintf("%s_%s.zip", condition.ID, time.Now().Format("20060102150405.999")))
+	err := xfile.Zip(ctx, zipFilePath, filePaths)
+	if xerror.Error(err) {
+		s.ILogger.Error(ctx, "zip file %s %+v fail %v", zipFilePath, filePaths, err)
+		return nil, xerror.Extend(xerror.ErrInternalError, "repository %s zip file fail %v", condition.ID, err)
+	}
+	defer os.Remove(zipFilePath)
+
+	content, err := os.ReadFile(zipFilePath)
+	if xerror.Error(err) {
+		s.ILogger.Error(ctx, "read zip file %s fail %v", zipFilePath, err)
+		return nil, xerror.Extend(xerror.ErrInternalError, "repository %s read zip file fail %v", condition.ID, err)
+	}
+	return content, nil
+}
+
+func (s *service) CheckRepositoryPassword(ctx context.Context, repository model.Repository) (bool, xerror.IError) {
+	defer xtrace.Trace(ctx)(repository)
+	return s.IDatabase.GetDB(ctx).CheckRepositoryPassword(ctx, repository)
+}
+
+func (s *service) ReportRepository(ctx context.Context, identify model.Identify) xerror.IError {
+	defer xtrace.Trace(ctx)(identify)
+	return s.IDatabase.GetDB(ctx).ReportRepository(ctx, identify)
+}
+
+func (s *service) AddComment(ctx context.Context, comment model.Comment) (model.Identify, xerror.IError) {
+	defer xtrace.Trace(ctx)(comment)
+	if comment.ID == "" {
+		comment.ID = uuid.New().String()
+	}
+
+	repositories, _, xerr := s.GetRepositories(ctx, model.RepositoryCondition{IDs: []string{comment.Repository}})
+	if xerror.Error(xerr) {
+		s.ILogger.Error(ctx, "get repository %s fail %v", comment.Repository, xerr)
+		return model.Identify{}, xerr
+	}
+	if len(repositories) == 0 {
+		s.ILogger.Error(ctx, "repository %s not found", comment.Repository)
+		return model.Identify{}, xerror.Extend(xerror.ErrNotFound, "repository %s not found", comment.Repository)
+	}
+
+	_, xerr = s.IDatabase.GetDB(ctx).AddComment(ctx, comment)
+	if xerror.Error(xerr) {
+		s.ILogger.Error(ctx, "add comment %+v fail %v", comment, xerr)
+		return model.Identify{}, xerr
+	}
+	return comment.Identify, nil
+}
+
+func (s *service) UpdateComment(ctx context.Context, comment model.Comment) xerror.IError {
+	defer xtrace.Trace(ctx)(comment)
+	return s.IDatabase.GetDB(ctx).UpdateComment(ctx, comment)
+}
+
+func (s *service) DeleteComments(ctx context.Context, comments ...model.Identify) xerror.IError {
+	defer xtrace.Trace(ctx)(comments)
+	return s.IDatabase.GetDB(ctx).DeleteComments(ctx, comments...)
+}
+
+func (s *service) GetComments(ctx context.Context, condition model.CommentCondition) ([]model.Comment, model.PageInfo, xerror.IError) {
+	defer xtrace.Trace(ctx)(condition)
+	return s.IDatabase.GetDB(ctx).GetComments(ctx, condition)
+}
