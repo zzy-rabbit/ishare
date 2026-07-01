@@ -50,7 +50,8 @@ func main() {
 	}
 
 	exit := make(chan os.Signal, 1)
-	signal.Notify(exit, syscall.SIGHUP, syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGKILL)
+	//signal.Notify(exit, syscall.SIGHUP, syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGKILL)
+	signal.Notify(exit, syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGKILL)
 	<-exit
 
 	xerr = xplugin.Stop(ctx)
