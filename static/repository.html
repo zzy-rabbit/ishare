@@ -59,6 +59,36 @@
             padding: 40px;
         }
 
+        /* 有效期倒计时 */
+        .expire-info {
+            background: #fefce8;
+            border: 1px solid #fde047;
+            border-radius: 10px;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .expire-label {
+            font-size: 14px;
+            color: #854d0e;
+            font-weight: 500;
+        }
+        .expire-time {
+            font-size: 15px;
+            font-weight: 600;
+            color: #ca8a04;
+        }
+        .expired {
+            background: #fee2e2;
+            border-color: #f87171;
+        }
+        .expired .expire-label,
+        .expired .expire-time {
+            color: #b91c1c;
+        }
+
         /* Loading & Viewer */
         .loading {
             position: fixed;
@@ -116,6 +146,12 @@
 <div class="card">
     <h1>图片暂存</h1>
 
+    <!-- 新增：有效期剩余时间 -->
+    <div id="expireInfo" class="expire-info" style="display: none;">
+        <span class="expire-label">有效期剩余：</span>
+        <span id="expireTime" class="expire-time"></span>
+    </div>
+
     <div class="item">
         <div class="label">提取密码</div>
         <input id="password" maxlength="4" type="password" placeholder="请输入4位密码">
@@ -138,6 +174,8 @@
     let authenticated = false;
     let downloaded = false;
     let currentPassword = "";
+    let expireAt = 0; // 新增：过期时间戳
+    let countdownInterval = null;
 
     const repository = {};
     const fileInfos = [];
@@ -154,6 +192,8 @@
     const fileList = document.getElementById("fileList");
     const viewer = document.getElementById("viewer");
     const viewerImage = document.getElementById("viewerImage");
+    const expireInfo = document.getElementById("expireInfo");
+    const expireTimeEl = document.getElementById("expireTime");
 
     initPasswordInput("password");
 
@@ -211,6 +251,35 @@
         }
     }
 
+    /* ---------- 新增：倒计时 ---------- */
+    function startCountdown() {
+        if (countdownInterval) clearInterval(countdownInterval);
+
+        function updateCountdown() {
+            const now = Math.floor(Date.now() / 1000);
+            const remaining = expireAt - now;
+
+            if (remaining <= 0) {
+                expireTimeEl.textContent = "已过期";
+                expireInfo.classList.add("expired");
+                clearInterval(countdownInterval);
+                return;
+            }
+
+            const hours = Math.floor(remaining / 3600);
+            const minutes = Math.floor((remaining % 3600) / 60);
+
+            if (hours > 0) {
+                expireTimeEl.textContent = `剩余 ${hours} 小时 ${minutes} 分钟`;
+            } else {
+                expireTimeEl.textContent = `剩余 ${minutes} 分钟`;
+            }
+        }
+
+        updateCountdown();
+        countdownInterval = setInterval(updateCountdown, 30000); // 每30秒更新一次
+    }
+
     /* ---------- API 调用 ---------- */
     async function authentication(password) {
         const resp = await fetch(host + "/system/api/v1/repository/authentication", {
@@ -232,7 +301,15 @@
         const json = await resp.json();
         if (json.code !== 0) throw new Error(json.message);
         if (!json.data.list?.length) throw new Error("暂存不存在");
+
         Object.assign(repository, json.data.list[0]);
+        expireAt = repository.expire_at || 0; // 获取过期时间
+
+        // 显示有效期信息
+        if (expireAt > 0) {
+            expireInfo.style.display = "flex";
+            startCountdown();
+        }
     }
 
     async function loadFiles() {
@@ -274,7 +351,7 @@
         }
     }
 
-    /* ---------- 下载 & 解压 ---------- */
+    /* ---------- 下载 & 解压（保持不变） ---------- */
     async function downloadZip() {
         showLoading("正在下载文件...");
         const resp = await fetch(host + "/system/api/v1/repository/file", {
@@ -386,6 +463,7 @@
     initialize();
 
     window.addEventListener("beforeunload", () => {
+        if (countdownInterval) clearInterval(countdownInterval);
         urlCache.forEach(url => URL.revokeObjectURL(url));
         urlCache.clear();
     });
