@@ -3,7 +3,7 @@ package internal
 import (
 	"github.com/gofiber/fiber/v2"
 	bpmodel "github.com/zzy-rabbit/bp/model"
-	"github.com/zzy-rabbit/ishare/model"
+	"github.com/zzy-rabbit/repository/model"
 	"github.com/zzy-rabbit/xtools/xerror"
 	"time"
 )
@@ -28,7 +28,7 @@ func (s *service) AddShare(ctx *fiber.Ctx) error {
 		})
 	}
 
-	identify, xerr := s.IShare.AddShare(ctx.UserContext(), share)
+	identify, xerr := s.repository.AddShare(ctx.UserContext(), share)
 	if xerror.Error(xerr) {
 		s.ILogger.Error(ctx.UserContext(), "add share %+v fail %v", share, xerr)
 		return ctx.JSON(&bpmodel.HttpResponse{
@@ -52,7 +52,7 @@ func (s *service) UpdateShare(ctx *fiber.Ctx) error {
 		})
 	}
 
-	xerr = s.IShare.UpdateShare(ctx.UserContext(), share)
+	xerr = s.repository.UpdateShare(ctx.UserContext(), share)
 	if xerror.Error(xerr) {
 		s.ILogger.Error(ctx.UserContext(), "update share %+v fail %v", share, xerr)
 		return ctx.JSON(&bpmodel.HttpResponse{
@@ -75,7 +75,7 @@ func (s *service) DeleteShares(ctx *fiber.Ctx) error {
 		})
 	}
 
-	xerr = s.IShare.DeleteShares(ctx.UserContext(), shares...)
+	xerr = s.repository.DeleteShares(ctx.UserContext(), shares...)
 	if xerror.Error(xerr) {
 		s.ILogger.Error(ctx.UserContext(), "delete shares %+v fail %v", shares, xerr)
 		return ctx.JSON(&bpmodel.HttpResponse{
@@ -101,7 +101,7 @@ func (s *service) GetShares(ctx *fiber.Ctx) error {
 	// 查找未过期的内容
 	condition.ExpireAfter = time.Now().Unix()
 	condition.ExpireBefore = 0
-	shares, page, xerr := s.IShare.GetShares(ctx.UserContext(), condition)
+	shares, page, xerr := s.repository.GetShares(ctx.UserContext(), condition)
 	if xerror.Error(xerr) {
 		s.ILogger.Error(ctx.UserContext(), "get shares %+v fail %v", condition, xerr)
 		return ctx.JSON(&bpmodel.HttpResponse{
@@ -129,7 +129,7 @@ func (s *service) GetShareFiles(ctx *fiber.Ctx) error {
 	}
 
 	// 查找未过期的内容
-	content, xerr := s.IShare.GetShareFiles(ctx.UserContext(), condition)
+	content, xerr := s.repository.GetShareFiles(ctx.UserContext(), condition)
 	if xerror.Error(xerr) {
 		s.ILogger.Error(ctx.UserContext(), "get shares %+v fail %v", condition.ID, xerr)
 		return ctx.JSON(&bpmodel.HttpResponse{
@@ -150,7 +150,7 @@ func (s *service) CheckSharePassword(ctx *fiber.Ctx) error {
 		})
 	}
 
-	ok, xerr := s.IShare.CheckSharePassword(ctx.UserContext(), share)
+	ok, xerr := s.repository.CheckSharePassword(ctx.UserContext(), share)
 	if xerror.Error(xerr) {
 		s.ILogger.Error(ctx.UserContext(), "update share %+v fail %v", share, xerr)
 		return ctx.JSON(&bpmodel.HttpResponse{
@@ -189,7 +189,7 @@ func (s *service) AddComment(ctx *fiber.Ctx) error {
 	}
 	comment.Locations = locations
 
-	identify, xerr := s.IShare.AddComment(ctx.UserContext(), comment)
+	identify, xerr := s.repository.AddComment(ctx.UserContext(), comment)
 	if xerror.Error(xerr) {
 		s.ILogger.Error(ctx.UserContext(), "add comment %+v fail %v", comment, xerr)
 		return ctx.JSON(&bpmodel.HttpResponse{
@@ -213,7 +213,7 @@ func (s *service) UpdateComment(ctx *fiber.Ctx) error {
 		})
 	}
 
-	xerr = s.IShare.UpdateComment(ctx.UserContext(), comment)
+	xerr = s.repository.UpdateComment(ctx.UserContext(), comment)
 	if xerror.Error(xerr) {
 		s.ILogger.Error(ctx.UserContext(), "update comment %+v fail %v", comment, xerr)
 		return ctx.JSON(&bpmodel.HttpResponse{
@@ -236,7 +236,7 @@ func (s *service) DeleteComments(ctx *fiber.Ctx) error {
 		})
 	}
 
-	xerr = s.IShare.DeleteComments(ctx.UserContext(), comments...)
+	xerr = s.repository.DeleteComments(ctx.UserContext(), comments...)
 	if xerror.Error(xerr) {
 		s.ILogger.Error(ctx.UserContext(), "delete comments %+v fail %v", comments, xerr)
 		return ctx.JSON(&bpmodel.HttpResponse{
@@ -259,7 +259,7 @@ func (s *service) GetComments(ctx *fiber.Ctx) error {
 		})
 	}
 
-	comments, page, xerr := s.IShare.GetComments(ctx.UserContext(), condition)
+	comments, page, xerr := s.repository.GetComments(ctx.UserContext(), condition)
 	if xerror.Error(xerr) {
 		s.ILogger.Error(ctx.UserContext(), "get comments %+v fail %v", condition, xerr)
 		return ctx.JSON(&bpmodel.HttpResponse{
@@ -287,7 +287,7 @@ func (s *service) ReportShare(ctx *fiber.Ctx) error {
 		})
 	}
 
-	xerr = s.IShare.ReportShare(ctx.UserContext(), identify)
+	xerr = s.repository.ReportShare(ctx.UserContext(), identify)
 	if xerror.Error(xerr) {
 		s.ILogger.Error(ctx.UserContext(), "report share %+v fail %v", identify, xerr)
 		return ctx.JSON(&bpmodel.HttpResponse{

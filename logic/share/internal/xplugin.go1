@@ -5,15 +5,15 @@ import (
 	"encoding/json"
 	reportApi "github.com/zzy-rabbit/bp/protocol/report/api"
 	logApi "github.com/zzy-rabbit/bp/tool/log/api"
-	databaseApi "github.com/zzy-rabbit/ishare/data/database/api"
-	fileApi "github.com/zzy-rabbit/ishare/logic/file/api"
-	"github.com/zzy-rabbit/ishare/logic/share/api"
+	databaseApi "github.com/zzy-rabbit/repository/data/database/api"
+	fileApi "github.com/zzy-rabbit/repository/logic/file/api"
+	"github.com/zzy-rabbit/repository/logic/share/api"
 	"github.com/zzy-rabbit/xtools/xerror"
 )
 
 type service struct {
-	IFile     fileApi.IPlugin     `xplugin:"ishare.logic.file"`
-	IDatabase databaseApi.IPlugin `xplugin:"ishare.data.database"`
+	IFile     fileApi.IPlugin     `xplugin:"repository.logic.file"`
+	IDatabase databaseApi.IPlugin `xplugin:"repository.data.database"`
 	IReport   reportApi.IPlugin   `xplugin:"bp.protocol.report"`
 	ILogger   logApi.IPlugin      `xplugin:"bp.tool.log"`
 	config    api.Config

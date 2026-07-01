@@ -1,7 +1,7 @@
 package internal
 
 import (
-	"github.com/zzy-rabbit/ishare/model"
+	"github.com/zzy-rabbit/repository/model"
 )
 
 func (f *File) FromModel(m model.File) {

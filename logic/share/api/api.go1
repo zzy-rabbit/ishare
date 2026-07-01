@@ -2,13 +2,13 @@ package api
 
 import (
 	"context"
-	"github.com/zzy-rabbit/ishare/model"
+	"github.com/zzy-rabbit/repository/model"
 	"github.com/zzy-rabbit/xtools/xerror"
 	"github.com/zzy-rabbit/xtools/xplugin"
 )
 
 const (
-	PluginName = "ishare.logic.share"
+	PluginName = "repository.logic.share"
 )
 
 type Config struct {

@@ -11,12 +11,12 @@ import (
 	_ "github.com/zzy-rabbit/bp/protocol/upload"
 	_ "github.com/zzy-rabbit/bp/protocol/websocket"
 
-	_ "github.com/zzy-rabbit/ishare/data/database"
-	_ "github.com/zzy-rabbit/ishare/data/ip2region"
+	_ "github.com/zzy-rabbit/repository/data/database"
+	_ "github.com/zzy-rabbit/repository/data/ip2region"
 
-	_ "github.com/zzy-rabbit/ishare/logic/file"
-	_ "github.com/zzy-rabbit/ishare/logic/share"
+	_ "github.com/zzy-rabbit/repository/logic/file"
+	_ "github.com/zzy-rabbit/repository/logic/share"
 
-	_ "github.com/zzy-rabbit/ishare/protocol/file"
-	_ "github.com/zzy-rabbit/ishare/protocol/share"
+	_ "github.com/zzy-rabbit/repository/protocol/file"
+	_ "github.com/zzy-rabbit/repository/protocol/share"
 )

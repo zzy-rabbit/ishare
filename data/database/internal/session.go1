@@ -3,7 +3,7 @@ package internal
 import (
 	"context"
 	logApi "github.com/zzy-rabbit/bp/tool/log/api"
-	"github.com/zzy-rabbit/ishare/data/database/api"
+	"github.com/zzy-rabbit/repository/data/database/api"
 	"gorm.io/gorm"
 )
 

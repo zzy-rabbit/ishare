@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/google/uuid"
-	"github.com/zzy-rabbit/ishare/model"
+	"github.com/zzy-rabbit/repository/model"
 	"github.com/zzy-rabbit/xtools/xerror"
 	"github.com/zzy-rabbit/xtools/xfile"
 	"github.com/zzy-rabbit/xtools/xtrace"

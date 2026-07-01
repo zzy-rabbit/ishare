@@ -7,15 +7,15 @@ import (
 	httpApi "github.com/zzy-rabbit/bp/protocol/http/api"
 	uploadApi "github.com/zzy-rabbit/bp/protocol/upload/api"
 	logApi "github.com/zzy-rabbit/bp/tool/log/api"
-	fileApi "github.com/zzy-rabbit/ishare/logic/file/api"
-	"github.com/zzy-rabbit/ishare/protocol/file/api"
+	fileApi "github.com/zzy-rabbit/repository/logic/file/api"
+	"github.com/zzy-rabbit/repository/protocol/file/api"
 	"github.com/zzy-rabbit/xtools/xerror"
 	"github.com/zzy-rabbit/xtools/xfile"
 	"os"
 )
 
 type service struct {
-	IFile   fileApi.IPlugin   `xplugin:"ishare.logic.file"`
+	IFile   fileApi.IPlugin   `xplugin:"repository.logic.file"`
 	ILogger logApi.IPlugin    `xplugin:"bp.tool.log"`
 	IHttp   httpApi.IPlugin   `xplugin:"bp.protocol.http"`
 	IUpload uploadApi.IPlugin `xplugin:"bp.protocol.upload"`

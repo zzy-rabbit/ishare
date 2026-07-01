@@ -1,4 +1,4 @@
-module github.com/zzy-rabbit/ishare
+module github.com/zzy-rabbit/repository
 
 go 1.24.0
 

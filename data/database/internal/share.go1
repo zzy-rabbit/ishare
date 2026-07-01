@@ -2,7 +2,7 @@ package internal
 
 import (
 	"context"
-	"github.com/zzy-rabbit/ishare/model"
+	"github.com/zzy-rabbit/repository/model"
 	"github.com/zzy-rabbit/xtools/xerror"
 	"gorm.io/gorm"
 )

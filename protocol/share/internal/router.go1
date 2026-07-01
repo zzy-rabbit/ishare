@@ -3,7 +3,7 @@ package internal
 import (
 	"context"
 	"github.com/gofiber/fiber/v2"
-	"github.com/zzy-rabbit/ishare/model"
+	"github.com/zzy-rabbit/repository/model"
 	"github.com/zzy-rabbit/xtools/xcontext"
 	"github.com/zzy-rabbit/xtools/xerror"
 	"time"

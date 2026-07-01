@@ -2,7 +2,7 @@
     "plugins": [
         {
             "plugin_name": "bp.tool.log",
-            "init_param": "{\"level\": 1,\"name\": \"ishare\",\"suffix\": \".log\",\"path\": \"\",\"max_size\": 10}",
+            "init_param": "{\"level\": 1,\"name\": \"repository\",\"suffix\": \".log\",\"path\": \"\",\"max_size\": 10}",
             "run_param": "",
             "stop_param": ""
         },
@@ -37,37 +37,37 @@
             "stop_param": ""
         },
         {
-            "plugin_name": "ishare.data.database",
-            "init_param": "{\"driver\":\"sqlite\",\"sqlite\":{\"file\":\"ishare.db\",\"user\":\"\",\"password\":\"\"}}",
+            "plugin_name": "repository.data.database",
+            "init_param": "{\"driver\":\"sqlite\",\"sqlite\":{\"file\":\"repository.db\",\"user\":\"\",\"password\":\"\"}}",
             "run_param": "",
             "stop_param": ""
         },
         {
-            "plugin_name": "ishare.data.ip2region",
+            "plugin_name": "repository.data.ip2region",
             "init_param": "{\"path\":\"thirdparty/ip2region_v4.xdb\"}",
             "run_param": "",
             "stop_param": ""
         },
         {
-            "plugin_name": "ishare.logic.file",
+            "plugin_name": "repository.logic.file",
             "init_param": "",
             "run_param": "",
             "stop_param": ""
         },
         {
-            "plugin_name": "ishare.logic.share",
+            "plugin_name": "repository.logic.share",
             "init_param": "{\"interval\":60}",
             "run_param": "",
             "stop_param": ""
         },
         {
-            "plugin_name": "ishare.protocol.file",
+            "plugin_name": "repository.protocol.file",
             "init_param": "{\"path\":\"./resources\"}",
             "run_param": "",
             "stop_param": ""
         },
         {
-            "plugin_name": "ishare.protocol.share",
+            "plugin_name": "repository.protocol.share",
             "init_param": "",
             "run_param": "",
             "stop_param": ""

@@ -4,13 +4,13 @@ import (
 	"context"
 	reportApi "github.com/zzy-rabbit/bp/protocol/report/api"
 	logApi "github.com/zzy-rabbit/bp/tool/log/api"
-	databaseApi "github.com/zzy-rabbit/ishare/data/database/api"
-	"github.com/zzy-rabbit/ishare/logic/file/api"
+	databaseApi "github.com/zzy-rabbit/repository/data/database/api"
+	"github.com/zzy-rabbit/repository/logic/file/api"
 	"github.com/zzy-rabbit/xtools/xerror"
 )
 
 type service struct {
-	IDatabase databaseApi.IPlugin `xplugin:"ishare.data.database"`
+	IDatabase databaseApi.IPlugin `xplugin:"repository.data.database"`
 	IReport   reportApi.IPlugin   `xplugin:"bp.protocol.report"`
 	ILogger   logApi.IPlugin      `xplugin:"bp.tool.log"`
 }
