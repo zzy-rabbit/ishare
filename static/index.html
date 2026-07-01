@@ -27,19 +27,58 @@
         .summary { margin-top: 15px; color: #666; font-size: 14px; }
 
         .file-item {
+            display: flex;
+            flex-direction: column;
+            padding: 12px 15px;
+            border-bottom: 1px solid #efefef;
+            background: white;
             position: relative;
         }
-        .progress-container {
-            margin-top: 8px;
-            display: none;
+        .file-item:last-child {
+            border-bottom: none;
         }
+
+        .file-header {
+            display: flex;
+            align-items: center;
+            width: 100%;
+        }
+
+        .file-info {
+            flex: 1;
+        }
+
+        .file-name {
+            color: #333;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .file-size {
+            color: #999;
+            font-size: 12px;
+            margin-top: 4px;
+        }
+
         .remove-btn {
-            width: 28px; height: 28px;
-            border: none; border-radius: 50%;
-            background: #ef4444; color: white;
-            cursor: pointer; font-size: 18px;
+            width: 28px;
+            height: 28px;
+            border: none;
+            border-radius: 50%;
+            background: #ef4444;
+            color: white;
+            cursor: pointer;
+            font-size: 18px;
+            flex-shrink: 0;
+            margin-left: 12px;
         }
         .remove-btn:hover { background: #dc2626; }
+
+        .progress-container {
+            margin-top: 10px;
+            width: 100%;
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -166,11 +205,13 @@
             row.className = "file-item";
             row.dataset.index = index;
             row.innerHTML = `
-                <div class="file-info">
-                    <div class="file-name">${escapeHtml(file.name)}</div>
-                    <div class="file-size">${formatSize(file.size)}</div>
+                <div class="file-header">
+                    <div class="file-info">
+                        <div class="file-name">${escapeHtml(file.name)}</div>
+                        <div class="file-size">${formatSize(file.size)}</div>
+                    </div>
+                    <button class="remove-btn" onclick="removeFile(${index})">×</button>
                 </div>
-                <button class="remove-btn" onclick="removeFile(${index})">×</button>
             `;
             fileList.appendChild(row);
         });
