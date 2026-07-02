@@ -66,7 +66,7 @@ func (s *service) UpdateRepository(ctx *fiber.Ctx) error {
 
 func (s *service) DeleteRepositories(ctx *fiber.Ctx) error {
 	var header bpmodel.Header
-	var repositories []model.Identify
+	var repositories []model.Repository
 	xerr := s.IHttp.ParseBodyParams(ctx, &header, &repositories)
 	if xerror.Error(xerr) {
 		s.ILogger.Error(ctx.UserContext(), "parse body params fail %v", xerr)
@@ -75,7 +75,33 @@ func (s *service) DeleteRepositories(ctx *fiber.Ctx) error {
 		})
 	}
 
-	xerr = s.IRepository.DeleteRepositories(ctx.UserContext(), repositories...)
+	for _, repository := range repositories {
+		if repository.Password == "" {
+			s.ILogger.Error(ctx.UserContext(), "check repository %+v password fail %v", repository, xerr)
+			return ctx.JSON(&bpmodel.HttpResponse{
+				IError: xerror.ErrPermissionDenied,
+			})
+		}
+		ok, xerr := s.IRepository.CheckRepositoryPassword(ctx.UserContext(), repository)
+		if xerror.Error(xerr) {
+			s.ILogger.Error(ctx.UserContext(), "check repository %+v password fail %v", repository, xerr)
+			return ctx.JSON(&bpmodel.HttpResponse{
+				IError: xerr,
+			})
+		}
+		if !ok {
+			s.ILogger.Error(ctx.UserContext(), "check repository %+v password fail %v", repository, xerr)
+			return ctx.JSON(&bpmodel.HttpResponse{
+				IError: xerror.ErrPermissionDenied,
+			})
+		}
+	}
+
+	identifies := make([]model.Identify, 0, len(repositories))
+	for _, repository := range repositories {
+		identifies = append(identifies, repository.Identify)
+	}
+	xerr = s.IRepository.DeleteRepositories(ctx.UserContext(), identifies...)
 	if xerror.Error(xerr) {
 		s.ILogger.Error(ctx.UserContext(), "delete repositories %+v fail %v", repositories, xerr)
 		return ctx.JSON(&bpmodel.HttpResponse{

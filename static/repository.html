@@ -89,6 +89,26 @@
             color: #b91c1c;
         }
 
+        /* 删除按钮 */
+        .delete-btn {
+            margin-top: 15px;
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+            width: 100%;
+            transition: .2s;
+        }
+        .delete-btn:hover {
+            background: #dc2626;
+        }
+        .delete-btn.confirm {
+            background: #b91c1c;
+        }
+
         /* Loading & Viewer */
         .loading {
             position: fixed;
@@ -127,6 +147,16 @@
             max-width: 90vw;
             max-height: 90vh;
             border-radius: 8px;
+        }
+
+        .deleted-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #666;
+        }
+        .deleted-state h2 {
+            color: #ef4444;
+            margin-bottom: 20px;
         }
     </style>
 </head>
@@ -168,6 +198,9 @@
     <div id="fileList" class="file-list">
         <div class="empty">请输入密码后查看文件</div>
     </div>
+
+    <!-- 新增：删除按钮 -->
+    <button id="deleteBtn" class="delete-btn" style="display: none;">删除</button>
 </div>
 
 <div id="viewer" class="viewer">
@@ -180,8 +213,9 @@
     let authenticated = false;
     let downloaded = false;
     let currentPassword = "";
-    let expireAt = 0; // 新增：过期时间戳
+    let expireAt = 0;
     let countdownInterval = null;
+    let deleteConfirmStage = 0; // 0: 未点击, 1: 首次点击(确认中)
 
     const repository = {};
     const fileInfos = [];
@@ -200,6 +234,7 @@
     const viewerImage = document.getElementById("viewerImage");
     const expireInfo = document.getElementById("expireInfo");
     const expireTimeEl = document.getElementById("expireTime");
+    const deleteBtn = document.getElementById("deleteBtn");
 
     initPasswordInput("password");
 
@@ -283,7 +318,71 @@
         }
 
         updateCountdown();
-        countdownInterval = setInterval(updateCountdown, 30000); // 每30秒更新一次
+        countdownInterval = setInterval(updateCountdown, 30000);
+    }
+
+    /* ---------- 删除功能 ---------- */
+    function showDeleteButton() {
+        deleteBtn.style.display = "block";
+    }
+
+    function resetDeleteButton() {
+        deleteConfirmStage = 0;
+        deleteBtn.textContent = "删除此中转记录";
+        deleteBtn.classList.remove("confirm");
+    }
+
+    async function deleteRepository() {
+        if (!authenticated || !currentPassword) {
+            showToast("请先验证密码");
+            return;
+        }
+
+        showLoading("正在删除...");
+
+        try {
+            const resp = await fetch(host + "/system/api/v1/repository", {
+                method: "DELETE",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify([{
+                    id: repositoryId,
+                    password: currentPassword
+                }])
+            });
+
+            if (!resp.ok) throw new Error("删除请求失败");
+
+            const json = await resp.json();
+            if (json.code !== 0) throw new Error(json.message || "删除失败");
+
+            // 删除成功
+            hideLoading();
+            showDeletedState();
+            showToast("删除成功");
+
+        } catch (e) {
+            hideLoading();
+            resetDeleteButton();
+            showToast(e.message || "删除失败");
+        }
+    }
+
+    function showDeletedState() {
+        const card = document.querySelector(".card");
+        card.innerHTML = `
+            <h1>中转站 提取</h1>
+            <div class="deleted-state">
+                <h2>✅ 已删除</h2>
+                <p>该中转记录已被成功删除</p>
+                <button onclick="goToHome()" class="btn" style="margin-top: 20px; width: auto; padding: 12px 32px;">
+                    返回首页
+                </button>
+            </div>
+        `;
+    }
+
+    function goToHome() {
+        window.location.href = host || (window.location.protocol + "//" + window.location.host);
     }
 
     /* ---------- API 调用 ---------- */
@@ -309,9 +408,8 @@
         if (!json.data.list?.length) throw new Error("内容不存在");
 
         Object.assign(repository, json.data.list[0]);
-        expireAt = repository.expire_at || 0; // 获取过期时间
+        expireAt = repository.expire_at || 0;
 
-        // 显示有效期信息
         if (expireAt > 0) {
             expireInfo.style.display = "flex";
             startCountdown();
@@ -348,6 +446,7 @@
             renderFiles();
             passwordInput.disabled = true;
             queryBtn.innerText = "已验证";
+            showDeleteButton(); // 验证成功后显示删除按钮
             showToast("验证成功");
         } catch (e) {
             hideLoading();
@@ -451,6 +550,25 @@
     /* ---------- 事件绑定 ---------- */
     queryBtn.addEventListener("click", queryRepository);
     passwordInput.addEventListener("keydown", e => e.key === "Enter" && queryRepository());
+
+    // 删除按钮事件
+    deleteBtn.addEventListener("click", () => {
+        if (deleteConfirmStage === 0) {
+            deleteConfirmStage = 1;
+            deleteBtn.textContent = "确认删除？";
+            deleteBtn.classList.add("confirm");
+
+            // 5秒后自动重置
+            setTimeout(() => {
+                if (deleteConfirmStage === 1) {
+                    resetDeleteButton();
+                }
+            }, 5000);
+        } else {
+            deleteRepository();
+        }
+    });
+
     viewer.addEventListener("click", () => {
         viewer.style.display = "none";
         viewerImage.removeAttribute("src");
