@@ -41,12 +41,12 @@ function initPasswordInput(inputId) {
 
 const DISCLAIMER_HTML = `
 <div style="max-height: 70vh; overflow-y: auto; padding: 20px 28px; line-height: 1.75; font-size: 14.5px; color: #333;">
-    <h2 style="text-align:center; margin-bottom:24px; color:#1e40af;">文件暂存服务免责说明</h2>
+    <h2 style="text-align:center; margin-bottom:24px; color:#1e40af;">中转站服务免责说明</h2>
     <p style="text-align:center; color:#666; margin-bottom:20px;">
         <strong>版本：V1.0</strong>　更新日期：2026年7月2日
     </p>
 
-    <p>感谢您使用本文件暂存服务（以下简称“本服务”）。本服务是一项面向公众开放的临时文件存储与分享工具，旨在提供便捷的文件传输中转功能。</p>
+    <p>感谢您使用本文件中转站服务（以下简称“本服务”）。本服务是一项面向公众开放的临时文件存储与分享工具，旨在提供便捷的文件传输中转功能。</p>
     <p>在使用本服务前，请您务必仔细阅读并充分理解本免责说明的全部内容。您使用本服务的任何功能，即视为您已完全接受本说明的全部条款。</p>
 
     <h3 style="margin:22px 0 10px; color:#1e40af; border-bottom:1px solid #e2e8f0; padding-bottom:6px;">一、 用户责任与账号安全</h3>
@@ -68,7 +68,7 @@ const DISCLAIMER_HTML = `
 
     <h3 style="margin:22px 0 10px; color:#1e40af; border-bottom:1px solid #e2e8f0; padding-bottom:6px;">三、 平台方的权利与免责</h3>
     <ul style="padding-left:20px; margin-bottom:18px;">
-        <li>本服务为临时暂存工具，不承诺永久保存或服务持续可用。</li>
+        <li>本服务为临时中转站工具，不承诺永久保存或服务持续可用。</li>
         <li>因系统维护、不可抗力等原因导致文件丢失，本服务不承担责任。</li>
         <li>本服务保留对违规内容的审核、删除和封禁权利。</li>
     </ul>
