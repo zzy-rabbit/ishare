@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>图片暂存</title>
+    <title>中转站</title>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <link rel="stylesheet" href="/css/common.css">
@@ -144,7 +144,7 @@
 </div>
 
 <div class="card">
-    <h1>图片暂存</h1>
+    <h1>中转站 提取</h1>
 
     <!-- 新增：有效期剩余时间 -->
     <div id="expireInfo" class="expire-info" style="display: none;">
@@ -297,10 +297,10 @@
 
     async function loadRepository() {
         const resp = await fetch(host + "/system/api/v1/repository?ids=" + encodeURIComponent(repositoryId));
-        if (!resp.ok) throw new Error("获取暂存失败");
+        if (!resp.ok) throw new Error("获取存储信息失败");
         const json = await resp.json();
         if (json.code !== 0) throw new Error(json.message);
-        if (!json.data.list?.length) throw new Error("暂存不存在");
+        if (!json.data.list?.length) throw new Error("内容不存在");
 
         Object.assign(repository, json.data.list[0]);
         expireAt = repository.expire_at || 0; // 获取过期时间
@@ -422,7 +422,7 @@
             return;
         }
         const blob = blobCache.get(fileId);
-        if (!blob) return showToast("图片不存在");
+        if (!blob) return showToast("文件不存在");
 
         let url = urlCache.get(fileId);
         if (!url) {

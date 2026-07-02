@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>图片暂存</title>
+    <title>中转站</title>
 
     <script src="https://unpkg.com/tus-js-client/dist/tus.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
@@ -86,7 +86,7 @@
 <div class="toast" id="toast"></div>
 
 <div class="card" id="mainCard">
-    <h1>图片暂存</h1>
+    <h1>中转站 上传</h1>
 
     <div class="item">
         <div class="label">提取密码（4位字母或数字）</div>
@@ -103,7 +103,7 @@
             <svg viewBox="0 0 24 24">
                 <path d="M5 20h14v-2H5zm7-18L5.33 9h3.84v4h5.66V9h3.84z" />
             </svg>
-            <p>点击选择图片 或 拖拽图片到这里</p>
+            <p>点击选择文件 或 拖拽文件到这里</p>
             <input id="fileInput" type="file" accept="image/*" multiple>
         </div>
 
@@ -111,13 +111,13 @@
         <div class="file-list" id="fileList"></div>
     </div>
 
-    <button class="btn" id="uploadBtn">开始暂存</button>
+    <button class="btn" id="uploadBtn">提交</button>
 </div>
 
 <!-- 成功结果面板 -->
 <div class="card success-panel" id="successPanel">
-    <h1 style="color:#10b981; margin-bottom: 10px;">✅ 暂存创建成功！</h1>
-    <p style="color:#64748b; margin-bottom: 25px;">分享下方链接即可查看图片</p>
+    <h1 style="color:#10b981; margin-bottom: 10px;">✅ 提交成功！</h1>
+    <p style="color:#64748b; margin-bottom: 25px;">复制下方链接即可查看</p>
 
     <div class="share-link" id="shareLink"></div>
 
@@ -417,7 +417,7 @@
             return;
         }
         if (files.length === 0) {
-            showToast("请选择图片"); return;
+            showToast("请选择文件"); return;
         }
 
         fileIds.length = 0;
@@ -431,7 +431,7 @@
                 fileIds.push(fileId);
             }
 
-            uploadBtn.innerText = "创建暂存...";
+            uploadBtn.innerText = "创建中...";
             const repoId = await createRepository();
             showToast("创建成功！");
             showSuccessPage(repoId);
@@ -439,7 +439,7 @@
             console.error(e);
             showToast(e.message || "上传失败");
             setUploading(false);
-            uploadBtn.innerText = "开始暂存";
+            uploadBtn.innerText = "开始提交";
         }
     }
 
