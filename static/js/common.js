@@ -108,12 +108,12 @@ function showDisclaimer() {
                 <!-- 内容区域 -->
                 <div id="disclaimerContent" style="padding:24px 28px; overflow-y:auto; max-height:calc(92vh - 125px);"></div>
                 
-                <!-- 底部按钮（已上移） -->
-                <div style="padding:4px 28px 20px; border-top:1px solid #eee; text-align:center;">
-                    <button onclick="closeDisclaimer()" class="btn" style="width:240px; padding:13px 32px; font-size:16px; background:linear-gradient(135deg,#3b82f6,#2563eb);">
-                        我已阅读并同意
-                    </button>
-                </div>
+<!--                &lt;!&ndash; 底部按钮（已上移） &ndash;&gt;-->
+<!--                <div style="padding:4px 28px 20px; border-top:1px solid #eee; text-align:center;">-->
+<!--                    <button onclick="closeDisclaimer()" class="btn" style="width:240px; padding:13px 32px; font-size:16px; background:linear-gradient(135deg,#3b82f6,#2563eb);">-->
+<!--                        我已阅读并同意-->
+<!--                    </button>-->
+<!--                </div>-->
             </div>
         `;
         document.body.appendChild(modal);
